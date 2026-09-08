@@ -5,7 +5,7 @@ import {
   hitungBatasKonsumsi,
 } from "@/lib/format";
 import { hitungStatusKonsumsi } from "@/lib/status";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { Batch } from "@/lib/types";
 import Link from "next/link";
 
@@ -18,7 +18,7 @@ export default async function ScanPage({
 }) {
   const { token } = await params;
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("batch")
     .select("*, dapur:dapur_id(nama, kode_dapur)")
     .eq("kode_qr", token)
@@ -52,7 +52,7 @@ export default async function ScanPage({
   );
 
   // Catat jejak scan (publik). Abaikan error agar halaman tetap tampil.
-  await supabase.from("scan_log").insert({
+  await supabaseAdmin.from("scan_log").insert({
     batch_id: batch.id,
     peran_pemindai: "publik",
   });

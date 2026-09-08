@@ -1,15 +1,13 @@
-/** Hash PIN dengan SHA-256 (hex). Cukup untuk demo, bukan auth produksi. */
-export async function hashPin(pin: string): Promise<string> {
-  const data = new TextEncoder().encode(pin.trim());
-  const digest = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(digest))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
+import "server-only";
+import { createHash } from "crypto";
 
+/**
+ * Hash PIN dengan SHA-256 (hex) — HANYA dipanggil di server (API routes).
+ * Client sekarang mengirim PIN plaintext lewat HTTPS ke API route yang
+ * melakukan hashing & pencocokan di server (lihat src/app/api/auth/*),
+ * bukan lagi di-hash di browser lalu dicocokkan lewat query Supabase
+ * langsung dari client seperti versi awal.
+ */
 export function hashPinSyncNode(pin: string): string {
-  // Hanya dipakai di server (API route)
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { createHash } = require("crypto") as typeof import("crypto");
   return createHash("sha256").update(pin.trim()).digest("hex");
 }

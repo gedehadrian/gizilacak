@@ -6,11 +6,8 @@ import { PinGate } from "@/components/PinGate";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatWaktu } from "@/lib/format";
 import { hitungStatusKonsumsi } from "@/lib/status";
-import { supabase } from "@/lib/supabase";
 import type { Laporan, ScanLog } from "@/lib/types";
 import Link from "next/link";
-
-const SESSION_KEY = "gizilacak_admin_session";
 
 interface BatchRow {
   id: string;
@@ -44,13 +41,17 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    void fetch("/api/seed", { method: "POST" });
-    try {
-      if (sessionStorage.getItem(SESSION_KEY) === "1") setAuthed(true);
-    } catch {
-      /* ignore */
-    }
-    setReady(true);
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/me?role=admin");
+        const json = await res.json();
+        if (json?.loggedIn) setAuthed(true);
+      } catch {
+        /* ignore */
+      } finally {
+        setReady(true);
+      }
+    })();
   }, []);
 
   useEffect(() => {
@@ -58,71 +59,47 @@ export default function AdminPage() {
   }, [authed]);
 
   async function handleLogin(pin: string): Promise<string | null> {
-    const res = await fetch("/api/admin-auth", {
+    const res = await fetch("/api/auth/admin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pin }),
     });
-    if (!res.ok) return "PIN admin salah.";
-    sessionStorage.setItem(SESSION_KEY, "1");
+    const json = await res.json();
+    if (!res.ok || !json.ok) return json.error || "PIN admin salah.";
     setAuthed(true);
     return null;
   }
 
-  function logout() {
-    sessionStorage.removeItem(SESSION_KEY);
+  async function logout() {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: "admin" }),
+    });
     setAuthed(false);
     setSelected(null);
+    setRows([]);
   }
 
   async function loadBatches() {
     setLoading(true);
-    const { data } = await supabase
-      .from("batch")
-      .select("*, dapur:dapur_id(nama, kode_dapur)")
-      .order("created_at", { ascending: false })
-      .limit(100);
-
-    const batches = (data as BatchRow[]) ?? [];
-    const withCounts = await Promise.all(
-      batches.map(async (b) => {
-        const [{ count: scanCount }, { count: laporanCount }] = await Promise.all([
-          supabase
-            .from("scan_log")
-            .select("*", { count: "exact", head: true })
-            .eq("batch_id", b.id),
-          supabase
-            .from("laporan")
-            .select("*", { count: "exact", head: true })
-            .eq("batch_id", b.id),
-        ]);
-        return {
-          ...b,
-          scan_count: scanCount ?? 0,
-          laporan_count: laporanCount ?? 0,
-        };
-      })
-    );
-    setRows(withCounts);
+    const res = await fetch("/api/admin/batches");
+    const json = await res.json();
+    setRows(res.ok && json.ok ? (json.batches as BatchRow[]) : []);
     setLoading(false);
   }
 
   async function openDetail(b: BatchRow) {
     setSelected(b);
-    const [{ data: scanData }, { data: lapData }] = await Promise.all([
-      supabase
-        .from("scan_log")
-        .select("*")
-        .eq("batch_id", b.id)
-        .order("waktu_scan", { ascending: false }),
-      supabase
-        .from("laporan")
-        .select("*")
-        .eq("batch_id", b.id)
-        .order("waktu_lapor", { ascending: false }),
-    ]);
-    setScans((scanData as ScanLog[]) ?? []);
-    setLaporans((lapData as Laporan[]) ?? []);
+    const res = await fetch(`/api/admin/batches/${b.id}`);
+    const json = await res.json();
+    if (res.ok && json.ok) {
+      setScans((json.scans as ScanLog[]) ?? []);
+      setLaporans((json.laporans as Laporan[]) ?? []);
+    } else {
+      setScans([]);
+      setLaporans([]);
+    }
   }
 
   const filtered = useMemo(() => {
@@ -169,7 +146,7 @@ export default function AdminPage() {
         <PinGate
           title="Dashboard Admin"
           subtitle="Penelusuran batch & riwayat untuk investigasi insiden (demo)."
-          hint="Demo: PIN admin = 2468"
+          hint="PIN admin diset lewat env var ADMIN_PIN di server."
           onSubmit={handleLogin}
         />
       </main>
@@ -180,21 +157,9 @@ export default function AdminPage() {
     <DashboardShell title="Dashboard Admin / BGN (demo)" onLogout={logout}>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryCard label="Total batch" value={summary.total} />
-        <SummaryCard
-          label="Dalam batas waktu"
-          value={summary.dalam}
-          tone="success"
-        />
-        <SummaryCard
-          label="Mendekati batas"
-          value={summary.mendekati}
-          tone="warning"
-        />
-        <SummaryCard
-          label="Melewati batas"
-          value={summary.lewat}
-          tone="danger"
-        />
+        <SummaryCard label="Dalam batas waktu" value={summary.dalam} tone="success" />
+        <SummaryCard label="Mendekati batas" value={summary.mendekati} tone="warning" />
+        <SummaryCard label="Melewati batas" value={summary.lewat} tone="danger" />
       </div>
 
       <section className="mt-6 rounded-[14px] bg-card p-5 shadow-[var(--shadow-card)]">
@@ -244,14 +209,10 @@ export default function AdminPage() {
                     <tr key={r.id} className="border-b border-border/70">
                       <td className="px-2 py-3 font-semibold">
                         {r.nama_komponen_menu}
-                        <div className="text-xs font-normal text-muted">
-                          {r.kode_qr}
-                        </div>
+                        <div className="text-xs font-normal text-muted">{r.kode_qr}</div>
                       </td>
                       <td className="px-2 py-3">{r.dapur?.nama ?? "—"}</td>
-                      <td className="px-2 py-3 whitespace-nowrap">
-                        {formatWaktu(r.waktu_selesai_masak)}
-                      </td>
+                      <td className="px-2 py-3 whitespace-nowrap">{formatWaktu(r.waktu_selesai_masak)}</td>
                       <td className="px-2 py-3">
                         <StatusBadge status={hasil.status} label={hasil.label} />
                       </td>
@@ -279,15 +240,10 @@ export default function AdminPage() {
         <section className="mt-6 rounded-[14px] bg-card p-5 shadow-[var(--shadow-card)]">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 className="text-base font-extrabold">
-                Detail · {selected.nama_komponen_menu}
-              </h2>
+              <h2 className="text-base font-extrabold">Detail · {selected.nama_komponen_menu}</h2>
               <p className="text-sm text-muted">
                 Token:{" "}
-                <Link
-                  href={`/scan/${selected.kode_qr}`}
-                  className="font-semibold text-primary underline"
-                >
+                <Link href={`/scan/${selected.kode_qr}`} className="font-semibold text-primary underline">
                   {selected.kode_qr}
                 </Link>
               </p>
@@ -309,10 +265,7 @@ export default function AdminPage() {
                   <li className="text-sm text-muted">Belum ada scan.</li>
                 ) : (
                   scans.map((s) => (
-                    <li
-                      key={s.id}
-                      className="rounded-xl border border-border px-3 py-2 text-sm"
-                    >
+                    <li key={s.id} className="rounded-xl border border-border px-3 py-2 text-sm">
                       {formatWaktu(s.waktu_scan)} · {s.peran_pemindai ?? "publik"}
                     </li>
                   ))
@@ -326,20 +279,13 @@ export default function AdminPage() {
                   <li className="text-sm text-muted">Belum ada laporan.</li>
                 ) : (
                   laporans.map((l) => (
-                    <li
-                      key={l.id}
-                      className="rounded-xl border border-border px-3 py-2 text-sm"
-                    >
-                      <p className="font-semibold capitalize">
-                        {l.jenis.replaceAll("_", " ")}
-                      </p>
+                    <li key={l.id} className="rounded-xl border border-border px-3 py-2 text-sm">
+                      <p className="font-semibold capitalize">{l.jenis.replaceAll("_", " ")}</p>
                       <p className="text-xs text-muted">
                         {formatWaktu(l.waktu_lapor)}
                         {l.nama_pelapor ? ` · ${l.nama_pelapor}` : ""}
                       </p>
-                      {l.catatan ? (
-                        <p className="mt-1 text-xs">{l.catatan}</p>
-                      ) : null}
+                      {l.catatan ? <p className="mt-1 text-xs">{l.catatan}</p> : null}
                     </li>
                   ))
                 )}
@@ -371,9 +317,7 @@ function SummaryCard({
           : "text-primary";
   return (
     <div className="rounded-[14px] bg-card p-4 shadow-[var(--shadow-card)]">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-        {label}
-      </p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</p>
       <p className={`mt-2 text-3xl font-extrabold ${toneCls}`}>{value}</p>
     </div>
   );

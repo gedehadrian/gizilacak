@@ -4,17 +4,20 @@ import { FormEvent, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { PinGate } from "@/components/PinGate";
 import { formatWaktu } from "@/lib/format";
-import { hashPin } from "@/lib/pin";
-import { supabase } from "@/lib/supabase";
-import type { Batch, Laporan, Sekolah } from "@/lib/types";
+import type { Laporan } from "@/lib/types";
 import Link from "next/link";
-
-const SESSION_KEY = "gizilacak_sekolah_session";
 
 interface Session {
   sekolahId: string;
   nama: string;
   kode: string;
+}
+
+interface BatchPreview {
+  id: string;
+  nama_komponen_menu: string;
+  waktu_selesai_masak: string;
+  kode_qr: string;
 }
 
 export default function LaporClient() {
@@ -24,21 +27,31 @@ export default function LaporClient() {
   const [session, setSession] = useState<Session | null>(null);
   const [ready, setReady] = useState(false);
   const [token, setToken] = useState(tokenFromUrl);
-  const [batch, setBatch] = useState<Batch | null>(null);
+  const [batch, setBatch] = useState<BatchPreview | null>(null);
+  const [batchNotFound, setBatchNotFound] = useState(false);
   const [riwayat, setRiwayat] = useState<Laporan[]>([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void fetch("/api/seed", { method: "POST" });
-    try {
-      const raw = sessionStorage.getItem(SESSION_KEY);
-      if (raw) setSession(JSON.parse(raw) as Session);
-    } catch {
-      /* ignore */
-    }
-    setReady(true);
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/me?role=sekolah");
+        const json = await res.json();
+        if (json?.loggedIn && json.session) {
+          setSession({
+            sekolahId: json.session.id,
+            nama: json.session.nama,
+            kode: json.session.kode,
+          });
+        }
+      } catch {
+        /* ignore */
+      } finally {
+        setReady(true);
+      }
+    })();
   }, []);
 
   useEffect(() => {
@@ -47,64 +60,65 @@ export default function LaporClient() {
 
   useEffect(() => {
     if (!session) return;
-    void loadRiwayat(session.sekolahId);
+    void loadRiwayat();
   }, [session]);
 
   useEffect(() => {
-    if (!token.trim()) {
+    if (!session || !token.trim()) {
       setBatch(null);
+      setBatchNotFound(false);
       return;
     }
     const t = setTimeout(() => {
       void lookupBatch(token.trim());
     }, 300);
     return () => clearTimeout(t);
-  }, [token]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, session]);
 
-  async function loadRiwayat(sekolahId: string) {
-    const { data } = await supabase
-      .from("laporan")
-      .select("*")
-      .eq("sekolah_id", sekolahId)
-      .order("waktu_lapor", { ascending: false })
-      .limit(10);
-    setRiwayat((data as Laporan[]) ?? []);
+  async function loadRiwayat() {
+    const res = await fetch("/api/laporan");
+    const json = await res.json();
+    setRiwayat(res.ok && json.ok ? (json.laporan as Laporan[]) : []);
   }
 
   async function lookupBatch(kode: string) {
-    const { data } = await supabase
-      .from("batch")
-      .select("*")
-      .eq("kode_qr", kode)
-      .maybeSingle();
-    setBatch((data as Batch) ?? null);
+    const res = await fetch(`/api/batch/lookup?token=${encodeURIComponent(kode)}`);
+    const json = await res.json();
+    if (res.ok && json.ok && json.batch) {
+      setBatch(json.batch as BatchPreview);
+      setBatchNotFound(false);
+    } else {
+      setBatch(null);
+      setBatchNotFound(true);
+    }
   }
 
   async function handleLogin(pin: string): Promise<string | null> {
-    const pinHash = await hashPin(pin);
-    const { data, error: qErr } = await supabase
-      .from("sekolah")
-      .select("id, nama, kode_sekolah, pin_hash")
-      .eq("pin_hash", pinHash)
-      .maybeSingle();
+    const res = await fetch("/api/auth/sekolah", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pin }),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.ok) return json.error || "PIN sekolah tidak cocok.";
 
-    if (qErr) return `Gagal login: ${qErr.message}`;
-    if (!data) return "PIN sekolah tidak cocok.";
-
-    const sekolah = data as Sekolah;
-    const next: Session = {
-      sekolahId: sekolah.id,
-      nama: sekolah.nama,
-      kode: sekolah.kode_sekolah,
-    };
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(next));
-    setSession(next);
+    setSession({
+      sekolahId: json.sekolah.id,
+      nama: json.sekolah.nama,
+      kode: json.sekolah.kode_sekolah,
+    });
     return null;
   }
 
-  function logout() {
-    sessionStorage.removeItem(SESSION_KEY);
+  async function logout() {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: "sekolah" }),
+    });
     setSession(null);
+    setRiwayat([]);
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -118,31 +132,29 @@ export default function LaporClient() {
     setMessage(null);
 
     const fd = new FormData(e.currentTarget);
-    const jenis = String(fd.get("jenis") || "");
     const payload = {
-      batch_id: batch.id,
-      sekolah_id: session.sekolahId,
-      jenis,
+      token: batch.kode_qr,
+      jenis: String(fd.get("jenis") || ""),
       catatan: String(fd.get("catatan") || "").trim() || null,
       nama_pelapor: String(fd.get("nama_pelapor") || "").trim() || null,
     };
 
-    const { error: insertErr } = await supabase.from("laporan").insert(payload);
-    if (insertErr) {
-      setError(insertErr.message);
+    const res = await fetch("/api/laporan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+
+    if (!res.ok || !json.ok) {
+      setError(json.error || "Gagal mengirim laporan.");
       setSaving(false);
       return;
     }
 
-    if (jenis === "diterima") {
-      await supabase.from("batch").update({ status: "diterima" }).eq("id", batch.id);
-    } else if (jenis === "ditolak") {
-      await supabase.from("batch").update({ status: "ditolak" }).eq("id", batch.id);
-    }
-
     setMessage("Laporan berhasil dikirim.");
     e.currentTarget.reset();
-    await loadRiwayat(session.sekolahId);
+    await loadRiwayat();
     setSaving(false);
   }
 
@@ -160,7 +172,7 @@ export default function LaporClient() {
         <PinGate
           title="Laporan Guru / UKS"
           subtitle="Masuk dengan PIN sekolah untuk mencatat penerimaan MBG."
-          hint="Demo: PIN sekolah = 5678 (SDN Contoh Tangerang)"
+          hint="Demo: PIN sekolah = 5678 (SDN Contoh Tangerang) — setelah `npm run seed`."
           onSubmit={handleLogin}
         />
       </main>
@@ -186,10 +198,7 @@ export default function LaporClient() {
         </button>
       </header>
 
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-4 rounded-[14px] bg-card p-5 shadow-[var(--shadow-card)]"
-      >
+      <form onSubmit={handleSubmit} className="space-y-4 rounded-[14px] bg-card p-5 shadow-[var(--shadow-card)]">
         <label className="block text-sm font-semibold">
           Token / kode QR batch
           <input
@@ -211,7 +220,7 @@ export default function LaporClient() {
               </Link>
             </p>
           </div>
-        ) : token.trim() ? (
+        ) : batchNotFound && token.trim() ? (
           <p className="text-sm text-danger">Batch tidak ditemukan untuk token ini.</p>
         ) : null}
 
@@ -222,10 +231,7 @@ export default function LaporClient() {
             ["ditolak", "Ditolak"],
             ["dilaporkan_bermasalah", "Dilaporkan bermasalah"],
           ].map(([value, label]) => (
-            <label
-              key={value}
-              className="flex items-center gap-2 rounded-xl border border-border px-3 py-3 text-sm"
-            >
+            <label key={value} className="flex items-center gap-2 rounded-xl border border-border px-3 py-3 text-sm">
               <input type="radio" name="jenis" value={value} required />
               {label}
             </label>
@@ -260,9 +266,7 @@ export default function LaporClient() {
         </button>
 
         {error ? <p className="text-sm font-semibold text-danger">{error}</p> : null}
-        {message ? (
-          <p className="text-sm font-semibold text-success">{message}</p>
-        ) : null}
+        {message ? <p className="text-sm font-semibold text-success">{message}</p> : null}
       </form>
 
       <section className="mt-5 rounded-[14px] bg-card p-5 shadow-[var(--shadow-card)]">
@@ -272,13 +276,8 @@ export default function LaporClient() {
             <li className="text-sm text-muted">Belum ada laporan.</li>
           ) : (
             riwayat.map((r) => (
-              <li
-                key={r.id}
-                className="rounded-xl border border-border px-3 py-2 text-sm"
-              >
-                <p className="font-semibold capitalize">
-                  {r.jenis.replaceAll("_", " ")}
-                </p>
+              <li key={r.id} className="rounded-xl border border-border px-3 py-2 text-sm">
+                <p className="font-semibold capitalize">{r.jenis.replaceAll("_", " ")}</p>
                 <p className="text-xs text-muted">
                   {formatWaktu(r.waktu_lapor)}
                   {r.nama_pelapor ? ` · ${r.nama_pelapor}` : ""}

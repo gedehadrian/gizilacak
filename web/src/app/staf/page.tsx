@@ -3,12 +3,8 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { PinGate } from "@/components/PinGate";
-import { formatWaktu, generateToken, splitCsv } from "@/lib/format";
-import { hashPin } from "@/lib/pin";
-import { supabase } from "@/lib/supabase";
-import type { Batch, Dapur } from "@/lib/types";
-
-const SESSION_KEY = "gizilacak_dapur_session";
+import { formatWaktu, splitCsv } from "@/lib/format";
+import type { Batch } from "@/lib/types";
 
 interface Session {
   dapurId: string;
@@ -32,57 +28,65 @@ export default function StafPage() {
     return d.toISOString().slice(0, 16);
   }, []);
 
+  // Cek status login lewat cookie httpOnly di server (bukan sessionStorage) —
+  // tidak bisa dipalsukan dari devtools karena cookie-nya tidak terbaca JS.
   useEffect(() => {
-    void fetch("/api/seed", { method: "POST" });
-    try {
-      const raw = sessionStorage.getItem(SESSION_KEY);
-      if (raw) setSession(JSON.parse(raw) as Session);
-    } catch {
-      /* ignore */
-    }
-    setReady(true);
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/me?role=dapur");
+        const json = await res.json();
+        if (json?.loggedIn && json.session) {
+          setSession({
+            dapurId: json.session.id,
+            nama: json.session.nama,
+            kode: json.session.kode,
+          });
+        }
+      } catch {
+        /* ignore */
+      } finally {
+        setReady(true);
+      }
+    })();
   }, []);
 
   useEffect(() => {
     if (!session) return;
-    void loadBatches(session.dapurId);
+    void loadBatches();
   }, [session]);
 
-  async function loadBatches(dapurId: string) {
-    const { data } = await supabase
-      .from("batch")
-      .select("*")
-      .eq("dapur_id", dapurId)
-      .order("created_at", { ascending: false })
-      .limit(20);
-    setBatches((data as Batch[]) ?? []);
+  async function loadBatches() {
+    const res = await fetch("/api/batch");
+    if (!res.ok) return;
+    const json = await res.json();
+    setBatches((json.batches as Batch[]) ?? []);
   }
 
   async function handleLogin(pin: string): Promise<string | null> {
-    const pinHash = await hashPin(pin);
-    const { data, error: qErr } = await supabase
-      .from("dapur")
-      .select("id, nama, kode_dapur, pin_hash")
-      .eq("pin_hash", pinHash)
-      .maybeSingle();
+    const res = await fetch("/api/auth/dapur", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pin }),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.ok) return json.error || "PIN dapur tidak cocok.";
 
-    if (qErr) return `Gagal login: ${qErr.message}`;
-    if (!data) return "PIN dapur tidak cocok.";
-
-    const dapur = data as Dapur;
-    const next: Session = {
-      dapurId: dapur.id,
-      nama: dapur.nama,
-      kode: dapur.kode_dapur,
-    };
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(next));
-    setSession(next);
+    setSession({
+      dapurId: json.dapur.id,
+      nama: json.dapur.nama,
+      kode: json.dapur.kode_dapur,
+    });
     return null;
   }
 
-  function logout() {
-    sessionStorage.removeItem(SESSION_KEY);
+  async function logout() {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: "dapur" }),
+    });
     setSession(null);
+    setBatches([]);
     setQrDataUrl(null);
     setLastToken(null);
   }
@@ -96,36 +100,33 @@ export default function StafPage() {
     setQrDataUrl(null);
 
     const fd = new FormData(e.currentTarget);
-    const token = generateToken();
-    const waktuSelesai = String(fd.get("waktu_selesai_masak") || "");
-    const waktuKirimRaw = String(fd.get("waktu_kirim") || "");
-    const ambang = Number(fd.get("ambang_batas_konsumsi_jam") || 4);
-
     const payload = {
-      dapur_id: session.dapurId,
-      nama_komponen_menu: String(fd.get("nama_komponen_menu") || "").trim(),
-      waktu_selesai_masak: new Date(waktuSelesai).toISOString(),
-      waktu_kirim: waktuKirimRaw
-        ? new Date(waktuKirimRaw).toISOString()
-        : null,
-      kalori: numOrNull(fd.get("kalori")),
-      protein: numOrNull(fd.get("protein")),
-      karbohidrat: numOrNull(fd.get("karbohidrat")),
-      lemak: numOrNull(fd.get("lemak")),
+      nama_komponen_menu: String(fd.get("nama_komponen_menu") || ""),
+      waktu_selesai_masak: String(fd.get("waktu_selesai_masak") || ""),
+      waktu_kirim: String(fd.get("waktu_kirim") || "") || null,
+      kalori: fd.get("kalori"),
+      protein: fd.get("protein"),
+      karbohidrat: fd.get("karbohidrat"),
+      lemak: fd.get("lemak"),
       daftar_alergen: splitCsv(String(fd.get("daftar_alergen") || "")),
       daftar_bahan: splitCsv(String(fd.get("daftar_bahan") || "")),
-      ambang_batas_konsumsi_jam: ambang,
-      kode_qr: token,
-      status: "dikirim",
+      ambang_batas_konsumsi_jam: Number(fd.get("ambang_batas_konsumsi_jam") || 4),
     };
 
-    const { error: insertErr } = await supabase.from("batch").insert(payload);
-    if (insertErr) {
-      setError(insertErr.message);
+    const res = await fetch("/api/batch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+
+    if (!res.ok || !json.ok) {
+      setError(json.error || "Gagal menyimpan batch.");
       setSaving(false);
       return;
     }
 
+    const token: string = json.batch.kode_qr;
     const scanUrl = `${window.location.origin}/scan/${token}`;
     const qrRes = await fetch(`/api/qr?url=${encodeURIComponent(scanUrl)}`);
     const qrJson = (await qrRes.json()) as { dataUrl?: string; error?: string };
@@ -136,7 +137,7 @@ export default function StafPage() {
 
     setMessage(`Batch tersimpan. Token QR: ${token}`);
     e.currentTarget.reset();
-    await loadBatches(session.dapurId);
+    await loadBatches();
     setSaving(false);
   }
 
@@ -154,7 +155,7 @@ export default function StafPage() {
         <PinGate
           title="Masuk Staf SPPG"
           subtitle="Masukkan PIN dapur untuk mencatat batch masak & menerbitkan QR."
-          hint="Demo: PIN dapur = 1234 (SPPG Cisauk Demo)"
+          hint="Demo: PIN dapur = 1234 (SPPG Cisauk Demo) — setelah `npm run seed`."
           onSubmit={handleLogin}
         />
       </main>
@@ -162,10 +163,7 @@ export default function StafPage() {
   }
 
   return (
-    <DashboardShell
-      title={`Input Batch — ${session.nama}`}
-      onLogout={logout}
-    >
+    <DashboardShell title={`Input Batch — ${session.nama}`} onLogout={logout}>
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <section className="rounded-[14px] bg-card p-5 shadow-[var(--shadow-card)]">
           <h2 className="text-base font-extrabold">Catat batch baru</h2>
@@ -258,65 +256,46 @@ export default function StafPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-white disabled:opacity-60"
+                className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white disabled:opacity-60 sm:w-auto"
               >
-                {saving ? "Menyimpan…" : "Selesai Masak → Terbitkan QR"}
+                {saving ? "Menyimpan…" : "Simpan & terbitkan QR"}
               </button>
             </div>
+            {error ? (
+              <p className="sm:col-span-2 text-sm font-semibold text-danger">{error}</p>
+            ) : null}
+            {message ? (
+              <p className="sm:col-span-2 text-sm font-semibold text-success">{message}</p>
+            ) : null}
           </form>
-
-          {error ? (
-            <p className="mt-4 text-sm font-semibold text-danger">{error}</p>
-          ) : null}
-          {message ? (
-            <p className="mt-4 text-sm font-semibold text-success">{message}</p>
-          ) : null}
         </section>
 
         <section className="rounded-[14px] bg-card p-5 shadow-[var(--shadow-card)]">
-          <h2 className="text-base font-extrabold">QR batch terbaru</h2>
-          {qrDataUrl && lastToken ? (
-            <div className="mt-4 flex flex-col items-center gap-3 text-center">
+          <h2 className="text-base font-extrabold">QR terbaru</h2>
+          {qrDataUrl ? (
+            <div className="mt-4 flex flex-col items-center gap-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={qrDataUrl}
-                alt={`QR untuk batch ${lastToken}`}
-                className="h-56 w-56 rounded-xl border border-border bg-white p-2"
-              />
-              <p className="text-xs break-all text-muted">
-                {typeof window !== "undefined"
-                  ? `${window.location.origin}/scan/${lastToken}`
-                  : `/scan/${lastToken}`}
+              <img src={qrDataUrl} alt={`QR batch ${lastToken}`} className="h-56 w-56" />
+              <p className="text-center text-xs text-muted">
+                Token: <span className="font-mono">{lastToken}</span>
               </p>
-              <a
-                href={`/scan/${lastToken}`}
-                className="text-sm font-bold text-primary underline"
-              >
-                Buka halaman scan
-              </a>
             </div>
           ) : (
-            <p className="mt-4 text-sm text-muted">
-              QR akan muncul di sini setelah batch disimpan.
+            <p className="mt-3 text-sm text-muted">
+              Belum ada QR yang diterbitkan sesi ini. Simpan batch baru untuk melihatnya.
             </p>
           )}
 
-          <h3 className="mt-8 text-sm font-extrabold">Batch terakhir</h3>
+          <h3 className="mt-6 text-sm font-extrabold">Batch terbaru dapur ini</h3>
           <ul className="mt-3 space-y-2">
             {batches.length === 0 ? (
-              <li className="text-sm text-muted">Belum ada batch.</li>
+              <li className="text-sm text-muted">Belum ada batch tercatat.</li>
             ) : (
               batches.map((b) => (
-                <li
-                  key={b.id}
-                  className="rounded-xl border border-border px-3 py-2 text-sm"
-                >
+                <li key={b.id} className="rounded-xl border border-border px-3 py-2 text-sm">
                   <p className="font-semibold">{b.nama_komponen_menu}</p>
                   <p className="text-xs text-muted">
-                    Matang: {formatWaktu(b.waktu_selesai_masak)} ·{" "}
-                    <a className="text-primary underline" href={`/scan/${b.kode_qr}`}>
-                      scan
-                    </a>
+                    {formatWaktu(b.waktu_selesai_masak)} · {b.kode_qr}
                   </p>
                 </li>
               ))
@@ -331,22 +310,16 @@ export default function StafPage() {
 function Field({
   label,
   children,
-  className = "",
+  className,
 }: {
   label: string;
   children: React.ReactNode;
   className?: string;
 }) {
   return (
-    <label className={`block text-sm font-semibold ${className}`}>
+    <label className={`block text-sm font-semibold ${className ?? ""}`}>
       {label}
       {children}
     </label>
   );
-}
-
-function numOrNull(v: FormDataEntryValue | null): number | null {
-  if (v == null || String(v).trim() === "") return null;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
 }
