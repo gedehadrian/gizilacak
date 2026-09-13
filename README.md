@@ -1,34 +1,63 @@
 # GiziLacak
 
-Purwarupa SaaS verifikasi batas waktu konsumsi MBG di titik penerimaan sekolah (Kanvas Gemilang 2026). Bukan duplikasi sistem produksi BGN. Satu QR per kiriman sekolah, dapat dipindai berulang.
+Sistem pelacakan waktu produksi dan informasi gizi berbasis kode QR pada
+kemasan program Makan Bergizi Gratis (MBG).
 
-Aplikasi web: folder `web/` (Next.js 16, Supabase, Midtrans Snap).
+Satu kode QR mewakili satu pengiriman ke satu sekolah untuk satu waktu makan.
+Siswa dan guru memindainya dengan kamera ponsel biasa — tanpa akun dan tanpa
+memasang aplikasi — lalu melihat waktu produksi, batas waktu konsumsi, serta
+gizi, bahan, dan alergen setiap komponen menu.
 
-## Setup
+## Dua bagian
 
-1. Salin `web/.env.example` → `web/.env.local` (lihat `docs/ENV_SETUP.md`).
-2. `cd web && npm install`
-3. `npm run dev` → http://localhost:3000
-4. Daftar di `/daftar`, verifikasi email, `/onboarding`, pilih organisasi.
-5. Beli paket contoh di `/paket` (checkout Midtrans hanya jika `MIDTRANS_SERVER_KEY` terisi).
-6. Menu → batch (catat matang) → finalisasi → hubungkan sekolah → kiriman → dispatch → scan QR → receipt sekolah.
+| Folder | Isi | Pengguna |
+|---|---|---|
+| `app/` | Aplikasi Flutter | Staf SPPG dan guru sekolah |
+| `web/` | Next.js 16 | Siswa dan guru yang memindai QR |
 
-## Test
+Seluruh pekerjaan operasional — kebijakan konsumsi, menu, produksi, kiriman,
+penerimaan, langganan — dikerjakan di aplikasi. Web tidak punya halaman login:
+ia hanya melayani halaman hasil pemindaian dan dua endpoint mesin (webhook
+pembayaran dan pembuatan transaksi Midtrans).
+
+Aplikasi berbicara langsung ke Supabase di bawah Row Level Security. Aturan
+penting ditegakkan di database, bukan di antarmuka: satu QR aktif per kiriman,
+pengiriman menolak berangkat tanpa langganan aktif dan tanpa sisa kuota, dan
+kebijakan waktu konsumsi disalin sebagai snapshot ke tiap batch sehingga
+perubahan aturan tidak mengubah catatan batch yang sudah berjalan.
+
+## Menjalankan
+
+**Basis data.** Terapkan berkas di `web/supabase/migrations/` secara berurutan
+lewat SQL Editor di dashboard Supabase.
+
+**Web**
 
 ```bash
-cd web
-npm test
-npm run build
+cp web/.env.example web/.env.local   # isi nilainya
+cd web && npm install && npm run dev
 ```
 
-## Deploy
+**Aplikasi**
 
-Tidak dijalankan dari sesi ini. Bind ke `0.0.0.0:$PORT` di host Linux. Filesystem ephemeral: jangan andalkan unggahan lokal.
+```bash
+cp app/.env.example app/.env         # isi nilainya
+cd app && flutter pub get && flutter run
+```
 
-## Dokumentasi
+`WEB_APP_URL` di `app/.env` menentukan alamat yang tertanam di dalam QR. Saat
+menguji dengan ponsel sungguhan, isi dengan alamat yang bisa dijangkau ponsel
+itu — bukan `localhost`.
 
-- `docs/IMPLEMENTATION_STATUS.md`
-- `docs/ENV_SETUP.md`
-- `docs/TEST_RESULTS.md`
-- `docs/MIGRATION_REPORT.md`
-- `GIZILACAK_FULL_FUNCTIONAL_SPEC.md`
+## Uji
+
+```bash
+cd app && flutter analyze --no-fatal-infos && flutter test
+cd web && npm test && npm run build
+```
+
+## Status
+
+Purwarupa untuk Lomba Kreativitas dan Inovasi (Kanvas) Gemilang Kabupaten
+Tangerang 2026. Bukan duplikasi sistem produksi Badan Gizi Nasional, melainkan
+lapisan verifikasi mandiri di titik konsumsi.

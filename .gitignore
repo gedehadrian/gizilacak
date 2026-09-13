@@ -1,0 +1,14 @@
+
+# Catatan kerja internal — tetap di mesin, tidak ikut ke repositori.
+/docs/
+/PLAN.md
+/BRAINSTORM.md
+/CURSOR_AGENT_PROMPT.md
+/CURSOR_PROMPT_GIZILACAK_V2.md
+/GIZILACAK_FULL_FUNCTIONAL_SPEC.md
+/PENYESUAIAN_PROPOSAL.md
+/PROMPT_SISA_JOB.md
+/RANCANGAN_GIZI_DAN_KOMPONEN.md
+app/CLAUDE_DESIGN.md
+web/CLAUDE.md
+web/AGENTS.md
