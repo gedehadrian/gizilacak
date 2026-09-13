@@ -80,26 +80,26 @@ class _RecipePageState extends State<RecipePage> {
     final name = TextEditingController(text: recipe?['name'] as String? ?? '');
     final description =
         TextEditingController(text: recipe?['description'] as String? ?? '');
-    final confirmed = await showCupertinoDialog<bool>(
+    final confirmed = await showGlDialog<bool>(
       context: context,
-      builder: (ctx) => CupertinoAlertDialog(
+      builder: (ctx) => GlDialog(
         title: const Text('Ubah menu'),
         content: Padding(
           padding: const EdgeInsets.only(top: 12),
           child: Column(
             children: [
-              CupertinoTextField(controller: name, placeholder: 'Nama menu'),
+              GlInput(controller: name, placeholder: 'Nama menu'),
               const SizedBox(height: 8),
-              CupertinoTextField(controller: description, placeholder: 'Keterangan'),
+              GlInput(controller: description, placeholder: 'Keterangan'),
             ],
           ),
         ),
         actions: [
-          CupertinoDialogAction(
+          GlDialogAction(
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Batal'),
           ),
-          CupertinoDialogAction(
+          GlDialogAction(
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Simpan'),
           ),
@@ -153,7 +153,7 @@ class _RecipePageState extends State<RecipePage> {
       subtitle: recipe?['description'] as String?,
       loading: loading && recipe == null,
       trailing: GlCircleButton(
-        icon: CupertinoIcons.add,
+        icon: LucideIcons.plus,
         tint: Gl.primary,
         foreground: Gl.surface,
         onTap: () => _editComponent(),
@@ -175,7 +175,7 @@ class _RecipePageState extends State<RecipePage> {
         const SizedBox(height: Gl.stack),
         if (comps.isEmpty)
           GlEmpty(
-            icon: CupertinoIcons.square_list,
+            icon: LucideIcons.clipboardList,
             message: 'Menu ini belum punya komponen. Tambahkan minimal satu — '
                 'misalnya "Nasi + ayam kecap".',
             actionLabel: 'Tambah komponen',
@@ -186,7 +186,7 @@ class _RecipePageState extends State<RecipePage> {
           for (final c in comps)
             GlTile(
               leading: GlGlyph(
-                icon: CupertinoIcons.flame,
+                icon: LucideIcons.flame,
                 tint: c['kcal'] == null ? Gl.amber : Gl.mint,
                 foreground: c['kcal'] == null ? Gl.amberInk : Gl.mintInk,
               ),
@@ -205,7 +205,7 @@ class _RecipePageState extends State<RecipePage> {
               'lama yang sudah memakainya tidak berubah.',
           children: [
             GlRow(
-              leading: const GlGlyph(icon: CupertinoIcons.pencil),
+              leading: const GlGlyph(icon: LucideIcons.pencil),
               title: 'Ubah nama & keterangan',
               onTap: _rename,
             ),
@@ -342,19 +342,19 @@ class _ComponentEditorPageState extends State<ComponentEditorPage> {
   }
 
   Future<void> _delete() async {
-    final confirmed = await showCupertinoModalPopup<bool>(
+    final confirmed = await showGlSheet<bool>(
       context: context,
-      builder: (ctx) => CupertinoActionSheet(
+      builder: (ctx) => GlSheet(
         title: const Text('Hapus komponen'),
         message: const Text('Batch yang sudah dibuat tidak ikut berubah.'),
         actions: [
-          CupertinoActionSheetAction(
+          GlSheetAction(
             isDestructiveAction: true,
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Hapus'),
           ),
         ],
-        cancelButton: CupertinoActionSheetAction(
+        cancelButton: GlSheetAction(
           onPressed: () => Navigator.pop(ctx, false),
           child: const Text('Batal'),
         ),
@@ -448,7 +448,7 @@ class _ComponentEditorPageState extends State<ComponentEditorPage> {
             GlRow(
               title: 'Alergen sudah diperiksa',
               chevron: false,
-              trailing: CupertinoSwitch(
+              trailing: GlToggle(
                 value: allergensChecked,
                 activeTrackColor: Gl.primary,
                 onChanged: (v) => setState(() => allergensChecked = v),

@@ -36,13 +36,13 @@ class _LoginPageState extends State<LoginPage> {
         );
         if (!mounted) return;
         if (res.session == null) {
-          await showCupertinoDialog<void>(
+          await showGlDialog<void>(
             context: context,
-            builder: (ctx) => CupertinoAlertDialog(
+            builder: (ctx) => GlDialog(
               title: const Text('Cek email'),
               content: const Text('Akun dibuat. Buka tautan verifikasi, lalu masuk di sini.'),
               actions: [
-                CupertinoDialogAction(
+                GlDialogAction(
                   onPressed: () => Navigator.pop(ctx),
                   child: const Text('OK'),
                 ),
@@ -98,14 +98,14 @@ class _LoginPageState extends State<LoginPage> {
                       placeholder: 'Email',
                       keyboardType: TextInputType.emailAddress,
                       autofill: const [AutofillHints.email],
-                      prefixIcon: CupertinoIcons.mail,
+                      prefixIcon: LucideIcons.mail,
                     ),
                     GlTextRow(
                       controller: password,
                       placeholder: 'Kata sandi',
                       obscure: true,
                       autofill: const [AutofillHints.password],
-                      prefixIcon: CupertinoIcons.lock,
+                      prefixIcon: LucideIcons.lockKeyhole,
                     ),
                   ],
                 ),
@@ -133,7 +133,7 @@ class _LoginPageState extends State<LoginPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const GlGlyph(
-                      icon: CupertinoIcons.qrcode_viewfinder,
+                      icon: LucideIcons.scanQrCode,
                       tint: Gl.mint,
                       foreground: Gl.mintInk,
                       size: 34,

@@ -84,18 +84,18 @@ class _IncidentsPageState extends State<IncidentsPage> {
       return;
     }
 
-    final delivery = await showCupertinoModalPopup<Map<String, dynamic>>(
+    final delivery = await showGlSheet<Map<String, dynamic>>(
       context: context,
-      builder: (ctx) => CupertinoActionSheet(
+      builder: (ctx) => GlSheet(
         title: const Text('Kiriman mana?'),
         actions: [
           for (final d in deliveries.take(12))
-            CupertinoActionSheetAction(
+            GlSheetAction(
               onPressed: () => Navigator.pop(ctx, d),
               child: Text(d['code'] as String? ?? 'Kiriman'),
             ),
         ],
-        cancelButton: CupertinoActionSheetAction(
+        cancelButton: GlSheetAction(
           onPressed: () => Navigator.pop(ctx),
           child: const Text('Batal'),
         ),
@@ -107,22 +107,22 @@ class _IncidentsPageState extends State<IncidentsPage> {
     var category = categories.keys.first;
     var severity = 'medium';
 
-    final confirmed = await showCupertinoDialog<bool>(
+    final confirmed = await showGlDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialog) => CupertinoAlertDialog(
+        builder: (ctx, setDialog) => GlDialog(
           title: Text('Laporkan ${delivery['code']}'),
           content: Column(
             children: [
               const SizedBox(height: 12),
-              CupertinoTextField(
+              GlInput(
                 controller: description,
                 placeholder: 'Apa yang terjadi',
                 maxLines: 3,
                 autofocus: true,
               ),
               const SizedBox(height: 12),
-              CupertinoSlidingSegmentedControl<String>(
+              GlSegments<String>(
                 groupValue: severity,
                 children: {
                   for (final entry in severities.entries)
@@ -136,7 +136,7 @@ class _IncidentsPageState extends State<IncidentsPage> {
               const SizedBox(height: 8),
               SizedBox(
                 height: 80,
-                child: CupertinoPicker(
+                child: GlChoicePicker(
                   itemExtent: 26,
                   onSelectedItemChanged: (i) =>
                       setDialog(() => category = categories.keys.elementAt(i)),
@@ -149,11 +149,11 @@ class _IncidentsPageState extends State<IncidentsPage> {
             ],
           ),
           actions: [
-            CupertinoDialogAction(
+            GlDialogAction(
               onPressed: () => Navigator.pop(ctx, false),
               child: const Text('Batal'),
             ),
-            CupertinoDialogAction(
+            GlDialogAction(
               onPressed: () => Navigator.pop(ctx, true),
               child: const Text('Laporkan'),
             ),
@@ -189,28 +189,28 @@ class _IncidentsPageState extends State<IncidentsPage> {
     final resolution = TextEditingController(
       text: incident['resolution'] as String? ?? '',
     );
-    final picked = await showCupertinoDialog<String>(
+    final picked = await showGlDialog<String>(
       context: context,
-      builder: (ctx) => CupertinoAlertDialog(
+      builder: (ctx) => GlDialog(
         title: const Text('Tindak lanjut'),
         content: Padding(
           padding: const EdgeInsets.only(top: 12),
-          child: CupertinoTextField(
+          child: GlInput(
             controller: resolution,
             placeholder: 'Apa yang dilakukan',
             maxLines: 3,
           ),
         ),
         actions: [
-          CupertinoDialogAction(
+          GlDialogAction(
             onPressed: () => Navigator.pop(ctx, 'in_review'),
             child: const Text('Sedang ditinjau'),
           ),
-          CupertinoDialogAction(
+          GlDialogAction(
             onPressed: () => Navigator.pop(ctx, 'resolved'),
             child: const Text('Selesai'),
           ),
-          CupertinoDialogAction(
+          GlDialogAction(
             isDestructiveAction: true,
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Batal'),
@@ -243,7 +243,7 @@ class _IncidentsPageState extends State<IncidentsPage> {
       title: 'Insiden',
       loading: loading && items.isEmpty,
       trailing: GlCircleButton(
-        icon: CupertinoIcons.add,
+        icon: LucideIcons.plus,
         tint: Gl.primary,
         foreground: Gl.surface,
         onTap: _report,
@@ -264,7 +264,7 @@ class _IncidentsPageState extends State<IncidentsPage> {
         const SizedBox(height: Gl.stack),
         if (items.isEmpty && !loading)
           GlEmpty(
-            icon: CupertinoIcons.exclamationmark_bubble,
+            icon: LucideIcons.messageSquareWarning,
             message: 'Belum ada insiden. Laporkan kalau ada kiriman yang bermasalah.',
             actionLabel: 'Laporkan insiden',
             onAction: _report,
@@ -294,7 +294,7 @@ class _IncidentsPageState extends State<IncidentsPage> {
 
     return GlTile(
       leading: GlGlyph(
-        icon: CupertinoIcons.exclamationmark_bubble,
+        icon: LucideIcons.messageSquareWarning,
         tint: paint.tint,
         foreground: paint.ink,
       ),

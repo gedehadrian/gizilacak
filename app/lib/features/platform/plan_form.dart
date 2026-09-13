@@ -88,7 +88,7 @@ class _PlanFormState extends State<PlanForm> {
               GlRow(
                 title: 'Paket aktif',
                 chevron: false,
-                trailing: CupertinoSwitch(
+                trailing: GlToggle(
                   value: active,
                   onChanged: busy ? null : (v) => setState(() => active = v),
                 ),

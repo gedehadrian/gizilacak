@@ -75,23 +75,37 @@ class _PlatformPageState extends State<PlatformPage> {
   final Set<String> publishing = {};
 
   Future<void> _planForm([Map<String, dynamic>? plan]) async {
-    final saved = await Navigator.of(context).push<bool>(
-      CupertinoPageRoute(builder: (_) => PlanForm(plan: plan)),
-    );
+    final saved = await Navigator.of(
+      context,
+    ).push<bool>(CupertinoPageRoute(builder: (_) => PlanForm(plan: plan)));
     if (saved == true && mounted) await _load();
   }
 
-  Future<void> _publish(Map<String, dynamic> plan, Map<String, dynamic> version) async {
+  Future<void> _publish(
+    Map<String, dynamic> plan,
+    Map<String, dynamic> version,
+  ) async {
     final id = version['id'] as String;
     if (publishing.contains(id)) return;
-    final confirmed = await showCupertinoDialog<bool>(context: context, builder: (ctx) => CupertinoAlertDialog(
-      title: Text('Terbitkan ${plan['name']} v${version['version']}?'),
-      content: Text('${rupiah(version['price_rp'])} per bulan. Versi ini akan tersedia untuk langganan jika paket aktif.'),
-      actions: [
-        CupertinoDialogAction(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
-        CupertinoDialogAction(onPressed: () => Navigator.pop(ctx, true), child: const Text('Terbitkan')),
-      ],
-    ));
+    final confirmed = await showGlDialog<bool>(
+      context: context,
+      builder: (ctx) => GlDialog(
+        title: Text('Terbitkan ${plan['name']} v${version['version']}?'),
+        content: Text(
+          '${rupiah(version['price_rp'])} per bulan. Versi ini akan tersedia untuk langganan jika paket aktif.',
+        ),
+        actions: [
+          GlDialogAction(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
+          GlDialogAction(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Terbitkan'),
+          ),
+        ],
+      ),
+    );
     if (confirmed != true || !mounted) return;
     setState(() => publishing.add(id));
     try {
@@ -122,9 +136,9 @@ class _PlatformPageState extends State<PlatformPage> {
       return;
     }
 
-    final picked = await showCupertinoModalPopup<Map<String, dynamic>>(
+    final picked = await showGlSheet<Map<String, dynamic>>(
       context: context,
-      builder: (ctx) => CupertinoActionSheet(
+      builder: (ctx) => GlSheet(
         title: Text('Paket untuk ${tenant['name']}'),
         message: const Text(
           'Mitra uji coba tidak membayar, tapi kuota dan masa berlakunya tetap '
@@ -132,7 +146,7 @@ class _PlatformPageState extends State<PlatformPage> {
         ),
         actions: [
           for (final version in published)
-            CupertinoActionSheetAction(
+            GlSheetAction(
               onPressed: () => Navigator.pop(ctx, version),
               child: Text(
                 "${version['_plan']} v${version['version']} · "
@@ -140,7 +154,7 @@ class _PlatformPageState extends State<PlatformPage> {
               ),
             ),
         ],
-        cancelButton: CupertinoActionSheetAction(
+        cancelButton: GlSheetAction(
           onPressed: () => Navigator.pop(ctx),
           child: const Text('Batal'),
         ),
@@ -150,20 +164,20 @@ class _PlatformPageState extends State<PlatformPage> {
 
     final reason = TextEditingController(text: 'Mitra uji coba lapangan');
     final months = TextEditingController(text: '4');
-    final confirmed = await showCupertinoDialog<bool>(
+    final confirmed = await showGlDialog<bool>(
       context: context,
-      builder: (ctx) => CupertinoAlertDialog(
+      builder: (ctx) => GlDialog(
         title: const Text('Beri langganan pilot'),
         content: Column(
           children: [
             const SizedBox(height: 12),
-            CupertinoTextField(
+            GlInput(
               controller: months,
               placeholder: 'Berapa bulan',
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 8),
-            CupertinoTextField(controller: reason, placeholder: 'Alasan'),
+            GlInput(controller: reason, placeholder: 'Alasan'),
             const SizedBox(height: 8),
             const Text(
               'Alasannya ikut tercatat di jejak audit.',
@@ -172,11 +186,11 @@ class _PlatformPageState extends State<PlatformPage> {
           ],
         ),
         actions: [
-          CupertinoDialogAction(
+          GlDialogAction(
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Batal'),
           ),
-          CupertinoDialogAction(
+          GlDialogAction(
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Beri'),
           ),
@@ -187,11 +201,11 @@ class _PlatformPageState extends State<PlatformPage> {
 
     try {
       await SessionScope.of(context).api.grantPilotSubscription(
-            tenantId: tenant['id'] as String,
-            planVersionId: picked['id'] as String,
-            months: int.tryParse(months.text.trim()) ?? 0,
-            reason: reason.text,
-          );
+        tenantId: tenant['id'] as String,
+        planVersionId: picked['id'] as String,
+        months: int.tryParse(months.text.trim()) ?? 0,
+        reason: reason.text,
+      );
       if (mounted) await _load();
     } on ApiException catch (e) {
       if (mounted) await showGlError(context, e.message);
@@ -204,29 +218,29 @@ class _PlatformPageState extends State<PlatformPage> {
     final category = TextEditingController(text: 'infrastruktur');
     var kind = 'fixed';
 
-    final confirmed = await showCupertinoDialog<bool>(
+    final confirmed = await showGlDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialog) => CupertinoAlertDialog(
+        builder: (ctx, setDialog) => GlDialog(
           title: const Text('Biaya platform'),
           content: Column(
             children: [
               const SizedBox(height: 12),
-              CupertinoTextField(
+              GlInput(
                 controller: description,
                 placeholder: 'Keterangan',
                 autofocus: true,
               ),
               const SizedBox(height: 8),
-              CupertinoTextField(controller: category, placeholder: 'Kategori'),
+              GlInput(controller: category, placeholder: 'Kategori'),
               const SizedBox(height: 8),
-              CupertinoTextField(
+              GlInput(
                 controller: amount,
                 placeholder: 'Nominal rupiah',
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 12),
-              CupertinoSlidingSegmentedControl<String>(
+              GlSegments<String>(
                 groupValue: kind,
                 children: const {
                   'fixed': Padding(
@@ -243,11 +257,11 @@ class _PlatformPageState extends State<PlatformPage> {
             ],
           ),
           actions: [
-            CupertinoDialogAction(
+            GlDialogAction(
               onPressed: () => Navigator.pop(ctx, false),
               child: const Text('Batal'),
             ),
-            CupertinoDialogAction(
+            GlDialogAction(
               onPressed: () => Navigator.pop(ctx, true),
               child: const Text('Simpan'),
             ),
@@ -277,10 +291,16 @@ class _PlatformPageState extends State<PlatformPage> {
     final unpaid = invoices.where((i) => i['status'] == 'open').toList();
     final paidTotal = invoices
         .where((i) => i['status'] == 'paid')
-        .fold<int>(0, (sum, i) => sum + ((i['total_rp'] as num?)?.toInt() ?? 0));
+        .fold<int>(
+          0,
+          (sum, i) => sum + ((i['total_rp'] as num?)?.toInt() ?? 0),
+        );
     final expenseTotal = expenses
         .where((e) => e['status'] == 'posted')
-        .fold<int>(0, (sum, e) => sum + ((e['amount_rp'] as num?)?.toInt() ?? 0));
+        .fold<int>(
+          0,
+          (sum, e) => sum + ((e['amount_rp'] as num?)?.toInt() ?? 0),
+        );
 
     return GlDetail(
       title: 'Platform',
@@ -317,7 +337,9 @@ class _PlatformPageState extends State<PlatformPage> {
                   label: 'Selisih',
                   value: rupiah(paidTotal - expenseTotal),
                   tint: paidTotal >= expenseTotal ? Gl.mint : Gl.amber,
-                  foreground: paidTotal >= expenseTotal ? Gl.mintInk : Gl.amberInk,
+                  foreground: paidTotal >= expenseTotal
+                      ? Gl.mintInk
+                      : Gl.amberInk,
                 ),
               ),
             ],
@@ -326,16 +348,18 @@ class _PlatformPageState extends State<PlatformPage> {
         const GlSectionHead('SPPG terdaftar'),
         if (tenants.isEmpty)
           const GlEmpty(
-            icon: CupertinoIcons.building_2_fill,
+            icon: LucideIcons.building2,
             message: 'Belum ada SPPG terdaftar.',
           )
         else
           for (final tenant in tenants.take(20))
             GlTile(
               leading: GlGlyph(
-                icon: CupertinoIcons.building_2_fill,
+                icon: LucideIcons.building2,
                 tint: tenant['status'] == 'active' ? Gl.lilac : Gl.fill,
-                foreground: tenant['status'] == 'active' ? Gl.primary : Gl.tertiary,
+                foreground: tenant['status'] == 'active'
+                    ? Gl.primary
+                    : Gl.tertiary,
               ),
               title: tenant['name'] as String? ?? 'SPPG',
               subtitle: tenant['sppg_code'] as String?,
@@ -352,7 +376,7 @@ class _PlatformPageState extends State<PlatformPage> {
           for (final invoice in unpaid.take(20))
             GlTile(
               leading: const GlGlyph(
-                icon: CupertinoIcons.doc_text,
+                icon: LucideIcons.fileText,
                 tint: Gl.amber,
                 foreground: Gl.amberInk,
               ),
@@ -362,31 +386,47 @@ class _PlatformPageState extends State<PlatformPage> {
             ),
           const SizedBox(height: Gl.stack - Gl.gap),
         ],
-        GlSectionHead('Paket', actionLabel: 'Buat paket', onAction: () => _planForm()),
+        GlSectionHead(
+          'Paket',
+          actionLabel: 'Buat paket',
+          onAction: () => _planForm(),
+        ),
         for (final plan in plans)
           GlSection(
-            header: displayPlanName(plan['name'] as String?, plan['code'] as String?),
+            header: displayPlanName(
+              plan['name'] as String?,
+              plan['code'] as String?,
+            ),
             footer: displayPlanDescription(plan['description'] as String?),
             children: [
               for (final version in _versions(plan))
                 GlRow(
                   title: 'v${version['version']}',
-                  subtitle: '${version['delivery_limit']} kiriman · '
+                  subtitle:
+                      '${version['delivery_limit']} kiriman · '
                       '${version['school_limit']} sekolah · '
                       '${version['staff_limit']} staf',
                   value: rupiah(version['price_rp']),
                   chevron: false,
                   trailing: version['published_at'] == null
-                      ? CupertinoButton(
-                          padding: EdgeInsets.zero,
-                          onPressed: publishing.contains(version['id']) ? null : () => _publish(plan, version),
-                          child: Text(publishing.contains(version['id']) ? 'Menerbitkan…' : 'Terbitkan'),
+                      ? GlButton(
+                          filled: false,
+                          onPressed: publishing.contains(version['id'])
+                              ? null
+                              : () => _publish(plan, version),
+                          label: publishing.contains(version['id'])
+                              ? 'Menerbitkan…'
+                              : 'Terbitkan',
                         )
                       : const StatusChip('Terbit', tone: ChipTone.good),
                 ),
               if (_versions(plan).isEmpty)
                 const GlRow(title: 'Belum ada versi', chevron: false),
-              GlRow(title: 'Buat versi baru', subtitle: 'Periode 1 bulan', onTap: () => _planForm(plan)),
+              GlRow(
+                title: 'Buat versi baru',
+                subtitle: 'Periode 1 bulan',
+                onTap: () => _planForm(plan),
+              ),
             ],
           ),
         GlSectionHead(
@@ -396,7 +436,7 @@ class _PlatformPageState extends State<PlatformPage> {
         ),
         if (expenses.isEmpty)
           GlEmpty(
-            icon: CupertinoIcons.money_dollar_circle,
+            icon: LucideIcons.circleDollarSign,
             message: 'Belum ada biaya platform tercatat.',
             actionLabel: 'Catat biaya',
             onAction: _addExpense,
@@ -405,15 +445,16 @@ class _PlatformPageState extends State<PlatformPage> {
           for (final expense in expenses.take(20))
             GlTile(
               leading: GlGlyph(
-                icon: CupertinoIcons.money_dollar,
+                icon: LucideIcons.dollarSign,
                 tint: expense['status'] == 'posted' ? Gl.mint : Gl.fill,
-                foreground: expense['status'] == 'posted' ? Gl.mintInk : Gl.tertiary,
+                foreground: expense['status'] == 'posted'
+                    ? Gl.mintInk
+                    : Gl.tertiary,
               ),
               title: expense['description'] as String? ?? 'Biaya',
               subtitle: '${expense['category']} · ${expense['kind']}',
               value: rupiah(expense['amount_rp']),
             ),
-
       ],
     );
   }
@@ -422,8 +463,10 @@ class _PlatformPageState extends State<PlatformPage> {
     final rows = List<Map<String, dynamic>>.from(
       (plan['plan_versions'] as List?) ?? const [],
     );
-    rows.sort((a, b) =>
-        ((b['version'] as num?) ?? 0).compareTo((a['version'] as num?) ?? 0));
+    rows.sort(
+      (a, b) =>
+          ((b['version'] as num?) ?? 0).compareTo((a['version'] as num?) ?? 0),
+    );
     return rows;
   }
 

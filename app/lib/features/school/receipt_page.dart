@@ -173,14 +173,14 @@ class _ItemSectionState extends State<_ItemSection> {
         header: name,
         children: [
           GlRow(
-            leading: const GlGlyph(icon: CupertinoIcons.cube_box),
+            leading: const GlGlyph(icon: LucideIcons.package),
             title: 'Dikirim',
             value: '$sent porsi',
             chevron: false,
           ),
           GlRow(
             leading: const GlGlyph(
-              icon: CupertinoIcons.checkmark_alt,
+              icon: LucideIcons.check,
               tint: Gl.mint,
               foreground: Gl.mintInk,
             ),
@@ -191,7 +191,7 @@ class _ItemSectionState extends State<_ItemSection> {
           ),
           GlRow(
             leading: const GlGlyph(
-              icon: CupertinoIcons.xmark,
+              icon: LucideIcons.x,
               tint: Gl.blush,
               foreground: Gl.blushInk,
             ),
@@ -211,7 +211,7 @@ class _ItemSectionState extends State<_ItemSection> {
         footer: 'Penerimaan bisa dicatat setelah SPPG menandai kiriman ini berangkat.',
         children: [
           GlRow(
-            leading: const GlGlyph(icon: CupertinoIcons.cube_box),
+            leading: const GlGlyph(icon: LucideIcons.package),
             title: 'Dikirim',
             value: '$sent porsi',
             chevron: false,
@@ -225,7 +225,7 @@ class _ItemSectionState extends State<_ItemSection> {
       footer: 'Alasan dan catatan hanya perlu diisi kalau ada porsi yang ditolak.',
       children: [
         GlRow(
-          leading: const GlGlyph(icon: CupertinoIcons.cube_box),
+          leading: const GlGlyph(icon: LucideIcons.package),
           title: 'Dikirim',
           value: '$sent porsi',
           chevron: false,

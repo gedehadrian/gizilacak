@@ -78,21 +78,21 @@ class _FinancePageState extends State<FinancePage> {
     final amount = TextEditingController();
     var category = categories.keys.first;
 
-    final confirmed = await showCupertinoDialog<bool>(
+    final confirmed = await showGlDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialog) => CupertinoAlertDialog(
+        builder: (ctx, setDialog) => GlDialog(
           title: const Text('Biaya baru'),
           content: Column(
             children: [
               const SizedBox(height: 12),
-              CupertinoTextField(
+              GlInput(
                 controller: description,
                 placeholder: 'Keterangan',
                 autofocus: true,
               ),
               const SizedBox(height: 8),
-              CupertinoTextField(
+              GlInput(
                 controller: amount,
                 placeholder: 'Nominal rupiah',
                 keyboardType: TextInputType.number,
@@ -100,7 +100,7 @@ class _FinancePageState extends State<FinancePage> {
               const SizedBox(height: 12),
               SizedBox(
                 height: 88,
-                child: CupertinoPicker(
+                child: GlChoicePicker(
                   itemExtent: 28,
                   scrollController: FixedExtentScrollController(
                     initialItem: categories.keys.toList().indexOf(category),
@@ -116,11 +116,11 @@ class _FinancePageState extends State<FinancePage> {
             ],
           ),
           actions: [
-            CupertinoDialogAction(
+            GlDialogAction(
               onPressed: () => Navigator.pop(ctx, false),
               child: const Text('Batal'),
             ),
-            CupertinoDialogAction(
+            GlDialogAction(
               onPressed: () => Navigator.pop(ctx, true),
               child: const Text('Simpan'),
             ),
@@ -146,27 +146,27 @@ class _FinancePageState extends State<FinancePage> {
   }
 
   Future<void> _changeStatus(Map<String, dynamic> expense) async {
-    final picked = await showCupertinoModalPopup<String>(
+    final picked = await showGlSheet<String>(
       context: context,
-      builder: (ctx) => CupertinoActionSheet(
+      builder: (ctx) => GlSheet(
         title: Text(expense['description'] as String? ?? 'Biaya'),
         message: const Text('Hanya biaya berstatus "posted" yang masuk ringkasan.'),
         actions: [
-          CupertinoActionSheetAction(
+          GlSheetAction(
             onPressed: () => Navigator.pop(ctx, 'posted'),
             child: const Text('Tandai posted'),
           ),
-          CupertinoActionSheetAction(
+          GlSheetAction(
             onPressed: () => Navigator.pop(ctx, 'draft'),
             child: const Text('Kembalikan ke draf'),
           ),
-          CupertinoActionSheetAction(
+          GlSheetAction(
             isDestructiveAction: true,
             onPressed: () => Navigator.pop(ctx, 'void'),
             child: const Text('Batalkan'),
           ),
         ],
-        cancelButton: CupertinoActionSheetAction(
+        cancelButton: GlSheetAction(
           onPressed: () => Navigator.pop(ctx),
           child: const Text('Tutup'),
         ),
@@ -195,7 +195,7 @@ class _FinancePageState extends State<FinancePage> {
       title: 'Keuangan',
       loading: loading && items.isEmpty && summary == null,
       trailing: GlCircleButton(
-        icon: CupertinoIcons.add,
+        icon: LucideIcons.plus,
         tint: Gl.primary,
         foreground: Gl.surface,
         onTap: _add,
@@ -237,7 +237,7 @@ class _FinancePageState extends State<FinancePage> {
           ),
         if (items.isEmpty && !loading)
           GlEmpty(
-            icon: CupertinoIcons.money_dollar_circle,
+            icon: LucideIcons.circleDollarSign,
             message: 'Belum ada biaya tercatat.',
             actionLabel: 'Catat biaya pertama',
             onAction: _add,
@@ -248,7 +248,7 @@ class _FinancePageState extends State<FinancePage> {
             for (final expense in day.rows)
               GlTile(
                 leading: GlGlyph(
-                  icon: CupertinoIcons.money_dollar,
+                  icon: LucideIcons.dollarSign,
                   tint: _tint(expense['status'] as String? ?? '').tint,
                   foreground: _tint(expense['status'] as String? ?? '').ink,
                 ),

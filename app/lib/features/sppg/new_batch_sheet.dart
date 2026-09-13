@@ -125,9 +125,9 @@ class _NewBatchSheetState extends State<NewBatchSheet> {
         );
 
   Future<void> _pickMenu() async {
-    final picked = await showCupertinoModalPopup<String>(
+    final picked = await showGlSheet<String>(
       context: context,
-      builder: (ctx) => CupertinoActionSheet(
+      builder: (ctx) => GlSheet(
         title: const Text('Menu yang dimasak'),
         message: const Text(
           'Gizi dan alergen dari menu ini disalin ke batch, lalu tampil saat '
@@ -135,16 +135,16 @@ class _NewBatchSheetState extends State<NewBatchSheet> {
         ),
         actions: [
           for (final menu in menus)
-            CupertinoActionSheetAction(
+            GlSheetAction(
               onPressed: () => Navigator.pop(ctx, menu['id'] as String),
               child: Text(menu['name'] as String? ?? 'Menu'),
             ),
-          CupertinoActionSheetAction(
+          GlSheetAction(
             onPressed: () => Navigator.pop(ctx, ''),
             child: const Text('Tanpa menu'),
           ),
         ],
-        cancelButton: CupertinoActionSheetAction(
+        cancelButton: GlSheetAction(
           onPressed: () => Navigator.pop(ctx),
           child: const Text('Batal'),
         ),
@@ -224,7 +224,7 @@ class _NewBatchSheetState extends State<NewBatchSheet> {
             GlTopBar(
               title: 'Batch baru',
               trailing: GlCircleButton(
-                icon: CupertinoIcons.xmark,
+                icon: LucideIcons.x,
                 onTap: () => Navigator.pop(context),
               ),
             ),
@@ -244,7 +244,7 @@ class _NewBatchSheetState extends State<NewBatchSheet> {
                           children: [
                             GlRow(
                               leading: GlGlyph(
-                                icon: CupertinoIcons.square_list,
+                                icon: LucideIcons.clipboardList,
                                 tint: menu == null ? Gl.amber : Gl.lilac,
                                 foreground: menu == null ? Gl.amberInk : Gl.primary,
                               ),

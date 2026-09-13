@@ -64,24 +64,24 @@ class _RecipesPageState extends State<RecipesPage> {
 
   Future<void> _create() async {
     final name = TextEditingController();
-    final confirmed = await showCupertinoDialog<bool>(
+    final confirmed = await showGlDialog<bool>(
       context: context,
-      builder: (ctx) => CupertinoAlertDialog(
+      builder: (ctx) => GlDialog(
         title: const Text('Menu baru'),
         content: Padding(
           padding: const EdgeInsets.only(top: 12),
-          child: CupertinoTextField(
+          child: GlInput(
             controller: name,
             placeholder: 'Nama menu',
             autofocus: true,
           ),
         ),
         actions: [
-          CupertinoDialogAction(
+          GlDialogAction(
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Batal'),
           ),
-          CupertinoDialogAction(
+          GlDialogAction(
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Buat'),
           ),
@@ -112,7 +112,7 @@ class _RecipesPageState extends State<RecipesPage> {
     return GlDetail(
       title: 'Menu',
       trailing: GlCircleButton(
-        icon: CupertinoIcons.add,
+        icon: LucideIcons.plus,
         tint: Gl.primary,
         foreground: Gl.surface,
         onTap: _create,
@@ -122,7 +122,7 @@ class _RecipesPageState extends State<RecipesPage> {
         if (error != null) GlNotice(error!),
         if (items.isEmpty && !loading)
           GlEmpty(
-            icon: CupertinoIcons.square_list,
+            icon: LucideIcons.clipboardList,
             message: 'Belum ada menu. Menu menyimpan gizi dan alergen, lalu ikut '
                 'tersalin ke setiap batch yang memakainya.',
             actionLabel: 'Buat menu pertama',
@@ -154,7 +154,7 @@ class _RecipeTile extends StatelessWidget {
 
     return GlTile(
       leading: GlGlyph(
-        icon: CupertinoIcons.square_list,
+        icon: LucideIcons.clipboardList,
         tint: archived ? Gl.fill : Gl.lilac,
         foreground: archived ? Gl.tertiary : Gl.primary,
       ),

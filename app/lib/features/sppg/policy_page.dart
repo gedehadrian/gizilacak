@@ -175,7 +175,7 @@ class _PolicyPageState extends State<PolicyPage> {
           for (final row in history)
             GlTile(
               leading: GlGlyph(
-                icon: CupertinoIcons.doc_text,
+                icon: LucideIcons.fileText,
                 tint: row['retired_at'] == null ? Gl.mint : Gl.fill,
                 foreground: row['retired_at'] == null ? Gl.mintInk : Gl.tertiary,
               ),

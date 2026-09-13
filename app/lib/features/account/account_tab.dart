@@ -114,27 +114,27 @@ class _AccountTabState extends State<AccountTab> {
             header: 'Organisasi',
             children: [
               GlRow(
-                leading: const GlGlyph(icon: CupertinoIcons.person_2),
+                leading: const GlGlyph(icon: LucideIcons.users),
                 title: 'Peran',
                 value: org.role,
                 chevron: false,
               ),
               if (org.code.isNotEmpty)
                 GlRow(
-                  leading: const GlGlyph(icon: CupertinoIcons.number),
+                  leading: const GlGlyph(icon: LucideIcons.hash),
                   title: org.isTenant ? 'Kode SPPG' : 'Kode sekolah',
                   value: org.code,
                   chevron: false,
                 ),
               GlRow(
-                leading: const GlGlyph(icon: CupertinoIcons.person_2_square_stack),
+                leading: const GlGlyph(icon: LucideIcons.contactRound),
                 title: 'Tim',
                 subtitle: 'Anggota dan undangan',
                 onTap: () => _open(const TeamPage()),
               ),
               GlRow(
                 leading: const GlGlyph(
-                  icon: CupertinoIcons.arrow_2_squarepath,
+                  icon: LucideIcons.repeat2,
                   tint: Gl.mint,
                   foreground: Gl.mintInk,
                 ),
@@ -151,7 +151,7 @@ class _AccountTabState extends State<AccountTab> {
             children: [
               GlRow(
                 leading: const GlGlyph(
-                  icon: CupertinoIcons.square_list,
+                  icon: LucideIcons.clipboardList,
                   tint: Gl.lilac,
                   foreground: Gl.primary,
                 ),
@@ -161,7 +161,7 @@ class _AccountTabState extends State<AccountTab> {
               ),
               GlRow(
                 leading: const GlGlyph(
-                  icon: CupertinoIcons.clock,
+                  icon: LucideIcons.clock,
                   tint: Gl.amber,
                   foreground: Gl.amberInk,
                 ),
@@ -179,7 +179,7 @@ class _AccountTabState extends State<AccountTab> {
             children: [
               GlRow(
                 leading: const GlGlyph(
-                  icon: CupertinoIcons.exclamationmark_bubble,
+                  icon: LucideIcons.messageSquareWarning,
                   tint: Gl.blush,
                   foreground: Gl.blushInk,
                 ),
@@ -189,7 +189,7 @@ class _AccountTabState extends State<AccountTab> {
               if (org.isTenant)
                 GlRow(
                   leading: const GlGlyph(
-                    icon: CupertinoIcons.money_dollar_circle,
+                    icon: LucideIcons.circleDollarSign,
                     tint: Gl.mint,
                     foreground: Gl.mintInk,
                   ),
@@ -199,14 +199,14 @@ class _AccountTabState extends State<AccountTab> {
                 ),
               if (org.isTenant)
                 GlRow(
-                  leading: const GlGlyph(icon: CupertinoIcons.arrow_down_doc),
+                  leading: const GlGlyph(icon: LucideIcons.fileDown),
                   title: 'Laporan',
                   subtitle: 'Unduh CSV kiriman dan keuangan',
                   onTap: () => _open(const ReportsPage()),
                 ),
               if (org.isTenant)
                 GlRow(
-                  leading: const GlGlyph(icon: CupertinoIcons.doc_text_search),
+                  leading: const GlGlyph(icon: LucideIcons.fileSearch),
                   title: 'Jejak audit',
                   onTap: () => _open(const AuditPage()),
                 ),
@@ -219,7 +219,7 @@ class _AccountTabState extends State<AccountTab> {
             children: [
               GlRow(
                 leading: const GlGlyph(
-                  icon: CupertinoIcons.creditcard,
+                  icon: LucideIcons.creditCard,
                   tint: Gl.amber,
                   foreground: Gl.amberInk,
                 ),
@@ -235,7 +235,7 @@ class _AccountTabState extends State<AccountTab> {
             children: [
               GlRow(
                 leading: const GlGlyph(
-                  icon: CupertinoIcons.chart_bar_square,
+                  icon: LucideIcons.chartColumn,
                   tint: Gl.lilac,
                   foreground: Gl.primary,
                 ),

@@ -97,7 +97,7 @@ class _Booting extends StatelessWidget {
   Widget build(BuildContext context) {
     return const CupertinoPageScaffold(
       backgroundColor: Gl.bg,
-      child: Center(child: CupertinoActivityIndicator()),
+      child: Center(child: GlSpinner()),
     );
   }
 }

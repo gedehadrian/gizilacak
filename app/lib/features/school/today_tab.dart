@@ -58,20 +58,20 @@ class _SchoolTodayTabState extends State<SchoolTodayTab> {
   }
 
   Future<void> _accept(String linkId, String sppg) async {
-    final confirmed = await showCupertinoModalPopup<bool>(
+    final confirmed = await showGlSheet<bool>(
       context: context,
-      builder: (ctx) => CupertinoActionSheet(
+      builder: (ctx) => GlSheet(
         title: Text('Terima $sppg'),
         message: const Text(
           'Setelah diterima, SPPG ini bisa mengirim makanan ke sekolah Anda.',
         ),
         actions: [
-          CupertinoActionSheetAction(
+          GlSheetAction(
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Terima'),
           ),
         ],
-        cancelButton: CupertinoActionSheetAction(
+        cancelButton: GlSheetAction(
           onPressed: () => Navigator.pop(ctx, false),
           child: const Text('Batal'),
         ),
@@ -127,7 +127,7 @@ class _SchoolTodayTabState extends State<SchoolTodayTab> {
             for (final row in pending)
               GlTile(
                 leading: const GlGlyph(
-                  icon: CupertinoIcons.envelope,
+                  icon: LucideIcons.mail,
                   tint: Gl.amber,
                   foreground: Gl.amberInk,
                 ),
@@ -144,7 +144,7 @@ class _SchoolTodayTabState extends State<SchoolTodayTab> {
           ],
           if (items.isEmpty)
             const GlEmpty(
-              icon: CupertinoIcons.tray,
+              icon: LucideIcons.inbox,
               message: 'Belum ada kiriman masuk. Siswa memindai QR di browser, bukan di '
                   'aplikasi ini.',
             )

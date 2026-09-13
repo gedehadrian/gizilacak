@@ -84,22 +84,22 @@ class _TeamPageState extends State<TeamPage> {
     final email = TextEditingController();
     var role = roles.first;
 
-    final confirmed = await showCupertinoDialog<bool>(
+    final confirmed = await showGlDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialog) => CupertinoAlertDialog(
+        builder: (ctx, setDialog) => GlDialog(
           title: const Text('Undang anggota'),
           content: Column(
             children: [
               const SizedBox(height: 12),
-              CupertinoTextField(
+              GlInput(
                 controller: email,
                 placeholder: 'Email',
                 keyboardType: TextInputType.emailAddress,
                 autofocus: true,
               ),
               const SizedBox(height: 12),
-              CupertinoSlidingSegmentedControl<String>(
+              GlSegments<String>(
                 groupValue: role,
                 children: {
                   for (final r in roles)
@@ -113,11 +113,11 @@ class _TeamPageState extends State<TeamPage> {
             ],
           ),
           actions: [
-            CupertinoDialogAction(
+            GlDialogAction(
               onPressed: () => Navigator.pop(ctx, false),
               child: const Text('Batal'),
             ),
-            CupertinoDialogAction(
+            GlDialogAction(
               onPressed: () => Navigator.pop(ctx, true),
               child: const Text('Undang'),
             ),
@@ -145,9 +145,9 @@ class _TeamPageState extends State<TeamPage> {
 
   Future<void> _showToken(String token, String email) async {
     final link = '${AppConfig.webAppUrl}/undangan/$token';
-    await showCupertinoDialog<void>(
+    await showGlDialog<void>(
       context: context,
-      builder: (ctx) => CupertinoAlertDialog(
+      builder: (ctx) => GlDialog(
         title: const Text('Bagikan token ini'),
         content: Padding(
           padding: const EdgeInsets.only(top: 10),
@@ -164,21 +164,21 @@ class _TeamPageState extends State<TeamPage> {
           ),
         ),
         actions: [
-          CupertinoDialogAction(
+          GlDialogAction(
             onPressed: () async {
               await Clipboard.setData(ClipboardData(text: token));
               if (ctx.mounted) Navigator.pop(ctx);
             },
             child: const Text('Salin token'),
           ),
-          CupertinoDialogAction(
+          GlDialogAction(
             onPressed: () async {
               await Clipboard.setData(ClipboardData(text: link));
               if (ctx.mounted) Navigator.pop(ctx);
             },
             child: const Text('Salin tautan'),
           ),
-          CupertinoDialogAction(
+          GlDialogAction(
             isDefaultAction: true,
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Selesai'),
@@ -189,18 +189,18 @@ class _TeamPageState extends State<TeamPage> {
   }
 
   Future<void> _revoke(Map<String, dynamic> invite) async {
-    final confirmed = await showCupertinoModalPopup<bool>(
+    final confirmed = await showGlSheet<bool>(
       context: context,
-      builder: (ctx) => CupertinoActionSheet(
+      builder: (ctx) => GlSheet(
         title: Text('Cabut undangan ${invite['email']}'),
         actions: [
-          CupertinoActionSheetAction(
+          GlSheetAction(
             isDestructiveAction: true,
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Cabut'),
           ),
         ],
-        cancelButton: CupertinoActionSheetAction(
+        cancelButton: GlSheetAction(
           onPressed: () => Navigator.pop(ctx, false),
           child: const Text('Batal'),
         ),
@@ -228,7 +228,7 @@ class _TeamPageState extends State<TeamPage> {
       subtitle: org.name,
       loading: loading && members.isEmpty,
       trailing: GlCircleButton(
-        icon: CupertinoIcons.person_add,
+        icon: LucideIcons.userRoundPlus,
         tint: Gl.primary,
         foreground: Gl.surface,
         onTap: _invite,
@@ -253,7 +253,7 @@ class _TeamPageState extends State<TeamPage> {
             for (final member in members)
               GlRow(
                 leading: GlGlyph(
-                  icon: CupertinoIcons.person,
+                  icon: LucideIcons.userRound,
                   tint: member['user_id'] == me ? Gl.lilac : Gl.fill,
                   foreground: member['user_id'] == me ? Gl.primary : Gl.tertiary,
                 ),
@@ -276,7 +276,7 @@ class _TeamPageState extends State<TeamPage> {
           for (final invite in open)
             GlTile(
               leading: const GlGlyph(
-                icon: CupertinoIcons.envelope,
+                icon: LucideIcons.mail,
                 tint: Gl.amber,
                 foreground: Gl.amberInk,
               ),
@@ -293,7 +293,7 @@ class _TeamPageState extends State<TeamPage> {
           for (final invite in closed)
             GlTile(
               leading: GlGlyph(
-                icon: CupertinoIcons.envelope_open,
+                icon: LucideIcons.mailOpen,
                 tint: invite['accepted_at'] != null ? Gl.mint : Gl.fill,
                 foreground: invite['accepted_at'] != null ? Gl.mintInk : Gl.tertiary,
               ),

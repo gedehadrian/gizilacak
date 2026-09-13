@@ -103,7 +103,7 @@ class _BatchesTabState extends State<BatchesTab> {
       title: 'Produksi',
       onRefresh: _load,
       trailing: GlCircleButton(
-        icon: CupertinoIcons.add,
+        icon: LucideIcons.plus,
         tint: Gl.primary,
         foreground: Gl.surface,
         onTap: _create,
@@ -114,7 +114,7 @@ class _BatchesTabState extends State<BatchesTab> {
           const GlLoading()
         else if (items.isEmpty)
           GlEmpty(
-            icon: CupertinoIcons.flame,
+            icon: LucideIcons.flame,
             message: 'Belum ada batch produksi.',
             actionLabel: 'Buat batch hari ini',
             onAction: _create,

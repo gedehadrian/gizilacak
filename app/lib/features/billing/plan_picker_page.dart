@@ -71,9 +71,9 @@ class _PlanPickerPageState extends State<PlanPickerPage> {
   }
 
   Future<void> _choose(Map<String, dynamic> plan, Map<String, dynamic> version) async {
-    final confirmed = await showCupertinoDialog<bool>(
+    final confirmed = await showGlDialog<bool>(
       context: context,
-      builder: (ctx) => CupertinoAlertDialog(
+      builder: (ctx) => GlDialog(
         title: Text('${plan['name']} v${version['version']}'),
         content: Padding(
           padding: const EdgeInsets.only(top: 10),
@@ -100,11 +100,11 @@ class _PlanPickerPageState extends State<PlanPickerPage> {
           ),
         ),
         actions: [
-          CupertinoDialogAction(
+          GlDialogAction(
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Batal'),
           ),
-          CupertinoDialogAction(
+          GlDialogAction(
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Terbitkan tagihan'),
           ),
@@ -158,7 +158,7 @@ class _PlanPickerPageState extends State<PlanPickerPage> {
         if (busy) const GlLoading(),
         if (plans.isEmpty && !loading)
           const GlEmpty(
-            icon: CupertinoIcons.square_list,
+            icon: LucideIcons.clipboardList,
             message: 'Belum ada paket yang terbit. Hubungi pengelola GiziLacak.',
           )
         else
@@ -171,7 +171,7 @@ class _PlanPickerPageState extends State<PlanPickerPage> {
               children: [
                 for (final version in plan['plan_versions'] as List)
                   GlRow(
-                    leading: const GlGlyph(icon: CupertinoIcons.creditcard),
+                    leading: const GlGlyph(icon: LucideIcons.creditCard),
                     title: rupiah((version as Map)['price_rp']),
                     subtitle: '${version['delivery_limit']} kiriman · '
                         '${version['school_limit']} sekolah · '
@@ -191,7 +191,7 @@ class _PlanPickerPageState extends State<PlanPickerPage> {
             children: [
               GlRow(
                 leading: const GlGlyph(
-                  icon: CupertinoIcons.chat_bubble_2,
+                  icon: LucideIcons.messagesSquare,
                   tint: Gl.mint,
                   foreground: Gl.mintInk,
                 ),

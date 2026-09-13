@@ -202,7 +202,7 @@ class _NewDeliveryPageState extends State<NewDeliveryPage> {
           children: [
             GlRow(
               leading: const GlGlyph(
-                icon: CupertinoIcons.building_2_fill,
+                icon: LucideIcons.building2,
                 tint: Gl.mint,
                 foreground: Gl.mintInk,
               ),
@@ -220,7 +220,7 @@ class _NewDeliveryPageState extends State<NewDeliveryPage> {
         ),
         if (components.isEmpty)
           const GlEmpty(
-            icon: CupertinoIcons.cube_box,
+            icon: LucideIcons.package,
             message: 'Belum ada komponen siap. Finalkan batch produksi lebih dulu.',
           )
         else
@@ -275,7 +275,7 @@ class _LineCard extends StatelessWidget {
       children: [
         GlRow(
           leading: const GlGlyph(
-            icon: CupertinoIcons.cube_box,
+            icon: LucideIcons.package,
             tint: Gl.amber,
             foreground: Gl.amberInk,
           ),
@@ -324,7 +324,7 @@ class _PickerPage extends StatelessWidget {
                 strong: true,
                 chevron: false,
                 trailing: option.id == selected
-                    ? const Icon(CupertinoIcons.checkmark_alt, size: 18, color: Gl.primary)
+                    ? const Icon(LucideIcons.check, size: 18, color: Gl.primary)
                     : null,
                 onTap: () => Navigator.pop(context, option),
               ),

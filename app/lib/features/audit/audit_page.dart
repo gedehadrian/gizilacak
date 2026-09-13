@@ -79,7 +79,7 @@ class _AuditPageState extends State<AuditPage> {
         if (error != null) GlNotice(error!),
         if (items.isEmpty && !loading)
           const GlEmpty(
-            icon: CupertinoIcons.doc_text_search,
+            icon: LucideIcons.fileSearch,
             message: 'Belum ada catatan. Tindakan penting seperti finalkan batch dan '
                 'dispatch kiriman tercatat di sini secara otomatis.',
           )
@@ -117,12 +117,12 @@ class _AuditPageState extends State<AuditPage> {
   }
 
   static IconData _icon(String action) {
-    if (action.startsWith('batch')) return CupertinoIcons.flame;
-    if (action.startsWith('delivery')) return CupertinoIcons.paperplane;
-    if (action.startsWith('receipt')) return CupertinoIcons.tray_arrow_down;
+    if (action.startsWith('batch')) return LucideIcons.flame;
+    if (action.startsWith('delivery')) return LucideIcons.send;
+    if (action.startsWith('receipt')) return LucideIcons.inbox;
     if (action.startsWith('invoice') || action.startsWith('payment')) {
-      return CupertinoIcons.creditcard;
+      return LucideIcons.creditCard;
     }
-    return CupertinoIcons.circle;
+    return LucideIcons.circle;
   }
 }

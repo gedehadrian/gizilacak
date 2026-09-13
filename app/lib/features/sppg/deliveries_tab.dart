@@ -78,7 +78,7 @@ class _DeliveriesTabState extends State<DeliveriesTab> {
       title: 'Kiriman',
       onRefresh: _load,
       trailing: GlCircleButton(
-        icon: CupertinoIcons.add,
+        icon: LucideIcons.plus,
         tint: Gl.primary,
         foreground: Gl.surface,
         onTap: _create,
@@ -89,7 +89,7 @@ class _DeliveriesTabState extends State<DeliveriesTab> {
           const GlLoading()
         else if (items.isEmpty)
           GlEmpty(
-            icon: CupertinoIcons.cube_box,
+            icon: LucideIcons.package,
             message: 'Belum ada kiriman. Satu QR berlaku untuk satu pengiriman ke satu '
                 'sekolah, dan boleh dicetak ulang di setiap dus.',
             actionLabel: 'Buat kiriman',

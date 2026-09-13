@@ -88,21 +88,21 @@ class _SppgHomeTabState extends State<SppgHomeTab> {
       );
       return;
     }
-    final school = await showCupertinoModalPopup<OrgScope>(
+    final school = await showGlSheet<OrgScope>(
       context: context,
-      builder: (ctx) => CupertinoActionSheet(
+      builder: (ctx) => GlSheet(
         title: const Text('Hubungkan sekolah'),
         message: const Text(
           'Sekolah masih harus menerima undangan agar kiriman bisa dikirim.',
         ),
         actions: [
           for (final s in session.schools)
-            CupertinoActionSheetAction(
+            GlSheetAction(
               onPressed: () => Navigator.pop(ctx, s),
               child: Text(s.name),
             ),
         ],
-        cancelButton: CupertinoActionSheetAction(
+        cancelButton: GlSheetAction(
           onPressed: () => Navigator.pop(ctx),
           child: const Text('Batal'),
         ),
@@ -170,7 +170,7 @@ class _SppgHomeTabState extends State<SppgHomeTab> {
           if (!hasPolicy)
             GlTile(
               leading: const GlGlyph(
-                icon: CupertinoIcons.exclamationmark_triangle,
+                icon: LucideIcons.triangleAlert,
                 tint: Gl.blush,
                 foreground: Gl.blushInk,
               ),
@@ -218,7 +218,7 @@ class _SppgHomeTabState extends State<SppgHomeTab> {
           if (!entitled)
             GlTile(
               leading: const GlGlyph(
-                icon: CupertinoIcons.creditcard,
+                icon: LucideIcons.creditCard,
                 tint: Gl.amber,
                 foreground: Gl.amberInk,
               ),
@@ -231,19 +231,19 @@ class _SppgHomeTabState extends State<SppgHomeTab> {
           GlQuickRow(
             children: [
               GlQuickTile(
-                icon: CupertinoIcons.flame,
+                icon: LucideIcons.flame,
                 label: 'Batch baru',
                 tint: Gl.amber,
                 foreground: Gl.amberInk,
                 onTap: _newBatch,
               ),
               GlQuickTile(
-                icon: CupertinoIcons.cube_box,
+                icon: LucideIcons.package,
                 label: 'Kiriman',
                 onTap: _newDelivery,
               ),
               GlQuickTile(
-                icon: CupertinoIcons.building_2_fill,
+                icon: LucideIcons.building2,
                 label: 'Sekolah',
                 tint: Gl.mint,
                 foreground: Gl.mintInk,
@@ -258,14 +258,14 @@ class _SppgHomeTabState extends State<SppgHomeTab> {
           ),
           if (links.isEmpty)
             const GlEmpty(
-              icon: CupertinoIcons.building_2_fill,
+              icon: LucideIcons.building2,
               message: 'Belum ada sekolah terhubung. Hubungkan dulu sebelum membuat kiriman.',
             )
           else
             for (final row in links)
               GlTile(
                 leading: GlGlyph(
-                  icon: CupertinoIcons.building_2_fill,
+                  icon: LucideIcons.building2,
                   tint: tintForTone(toneForStatus(row['status'] as String? ?? '')).tint,
                   foreground: tintForTone(toneForStatus(row['status'] as String? ?? '')).ink,
                 ),

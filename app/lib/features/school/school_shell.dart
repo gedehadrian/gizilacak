@@ -13,21 +13,16 @@ class SchoolShell extends StatelessWidget {
       color: Gl.bg,
       child: GlPhone(
         child: CupertinoTabScaffold(
-          tabBar: CupertinoTabBar(
-            backgroundColor: Gl.surface.withValues(alpha: 0.96),
-            activeColor: Gl.primary,
-            inactiveColor: Gl.tertiary,
-            border: const Border(top: BorderSide(color: Gl.line, width: 0)),
-            iconSize: 24,
+          tabBar: GlTabBar(
             items: const [
               BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.tray),
-                activeIcon: Icon(CupertinoIcons.tray_fill),
+                icon: Icon(LucideIcons.inbox),
+                activeIcon: Icon(LucideIcons.inbox),
                 label: 'Hari ini',
               ),
               BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.person),
-                activeIcon: Icon(CupertinoIcons.person_fill),
+                icon: Icon(LucideIcons.userRound),
+                activeIcon: Icon(LucideIcons.userRound),
                 label: 'Akun',
               ),
             ],

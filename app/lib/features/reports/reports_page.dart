@@ -147,25 +147,25 @@ class _ReportsPageState extends State<ReportsPage> {
           children: [
             GlRow(
               leading: const GlGlyph(
-                icon: CupertinoIcons.cube_box,
+                icon: LucideIcons.package,
                 tint: Gl.lilac,
                 foreground: Gl.primary,
               ),
               title: 'Kiriman',
               subtitle: 'Kode, sekolah, status, waktu kirim',
-              trailing: busyOperations ? const CupertinoActivityIndicator() : null,
+              trailing: busyOperations ? const GlSpinner() : null,
               onTap: busyOperations ? null : _operations,
               chevron: !busyOperations,
             ),
             GlRow(
               leading: const GlGlyph(
-                icon: CupertinoIcons.money_dollar_circle,
+                icon: LucideIcons.circleDollarSign,
                 tint: Gl.mint,
                 foreground: Gl.mintInk,
               ),
               title: 'Keuangan',
               subtitle: 'Biaya operasional dan tagihan',
-              trailing: busyFinance ? const CupertinoActivityIndicator() : null,
+              trailing: busyFinance ? const GlSpinner() : null,
               onTap: busyFinance ? null : _finance,
               chevron: !busyFinance,
             ),

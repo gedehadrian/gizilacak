@@ -134,7 +134,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
           children: [
             for (final item in items)
               GlRow(
-                leading: const GlGlyph(icon: CupertinoIcons.cube_box),
+                leading: const GlGlyph(icon: LucideIcons.package),
                 title: (item['batch_components'] as Map?)?['name'] as String? ?? 'Komponen',
                 subtitle: _receiptLine(done[item['id'] as String]),
                 value: '${item['portions']} porsi',

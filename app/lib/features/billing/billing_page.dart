@@ -164,7 +164,7 @@ class _BillingPageState extends State<BillingPage> {
           children: [
             GlRow(
               leading: const GlGlyph(
-                icon: CupertinoIcons.square_list,
+                icon: LucideIcons.clipboardList,
                 tint: Gl.lilac,
                 foreground: Gl.primary,
               ),
@@ -181,7 +181,7 @@ class _BillingPageState extends State<BillingPage> {
                 'periode ini habis".',
             children: [
               GlRow(
-                leading: const GlGlyph(icon: CupertinoIcons.cube_box),
+                leading: const GlGlyph(icon: LucideIcons.package),
                 title: 'Kiriman terpakai',
                 value: '${counter['used']} dari ${counter['limit_snapshot']}',
                 chevron: false,
@@ -200,7 +200,7 @@ class _BillingPageState extends State<BillingPage> {
         ],
         if (invoices.isEmpty)
           GlEmpty(
-            icon: CupertinoIcons.doc_text,
+            icon: LucideIcons.fileText,
             message: 'Belum ada tagihan. Pilih paket untuk menerbitkan tagihan '
                 'pertama.',
             actionLabel: 'Pilih paket',
@@ -211,7 +211,7 @@ class _BillingPageState extends State<BillingPage> {
           for (final invoice in invoices)
             GlTile(
               leading: GlGlyph(
-                icon: CupertinoIcons.doc_text,
+                icon: LucideIcons.fileText,
                 tint: tintForTone(toneForStatus(invoice['status'] as String? ?? '')).tint,
                 foreground: tintForTone(toneForStatus(invoice['status'] as String? ?? '')).ink,
               ),
@@ -287,7 +287,7 @@ class _InvoiceTile extends StatelessWidget {
             Row(
               children: [
                 GlGlyph(
-                  icon: CupertinoIcons.doc_text,
+                  icon: LucideIcons.fileText,
                   tint: overdue ? Gl.blush : Gl.amber,
                   foreground: overdue ? Gl.blushInk : Gl.amberInk,
                 ),

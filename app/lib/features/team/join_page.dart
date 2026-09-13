@@ -31,13 +31,13 @@ class _JoinPageState extends State<JoinPage> {
       await session.refreshMemberships();
       if (!mounted) return;
       Navigator.pop(context);
-      await showCupertinoDialog<void>(
+      await showGlDialog<void>(
         context: context,
-        builder: (ctx) => CupertinoAlertDialog(
+        builder: (ctx) => GlDialog(
           title: const Text('Undangan diterima'),
           content: const Text('Organisasinya sekarang muncul di daftar Anda.'),
           actions: [
-            CupertinoDialogAction(
+            GlDialogAction(
               onPressed: () => Navigator.pop(ctx),
               child: const Text('OK'),
             ),

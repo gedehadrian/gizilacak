@@ -76,21 +76,21 @@ class _BatchPageState extends State<BatchPage> {
   }
 
   Future<void> _finalize() async {
-    final confirmed = await showCupertinoModalPopup<bool>(
+    final confirmed = await showGlSheet<bool>(
       context: context,
-      builder: (ctx) => CupertinoActionSheet(
+      builder: (ctx) => GlSheet(
         title: const Text('Finalkan batch'),
         message: const Text(
           'Setelah final, waktu matang tidak bisa diubah dan batch bisa dialokasikan '
           'ke kiriman sekolah.',
         ),
         actions: [
-          CupertinoActionSheetAction(
+          GlSheetAction(
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Finalkan'),
           ),
         ],
-        cancelButton: CupertinoActionSheetAction(
+        cancelButton: GlSheetAction(
           onPressed: () => Navigator.pop(ctx, false),
           child: const Text('Batal'),
         ),
@@ -188,14 +188,14 @@ class _ComponentSection extends StatelessWidget {
       header: component['name'] as String? ?? 'Komponen',
       children: [
         GlRow(
-          leading: const GlGlyph(icon: CupertinoIcons.chart_pie),
+          leading: const GlGlyph(icon: LucideIcons.chartPie),
           title: 'Porsi diproduksi',
           value: '${component['portions_produced'] ?? 0}',
           chevron: false,
         ),
         GlRow(
           leading: GlGlyph(
-            icon: CupertinoIcons.flame,
+            icon: LucideIcons.flame,
             tint: cookedAt == null ? Gl.fill : Gl.amber,
             foreground: cookedAt == null ? Gl.tertiary : Gl.amberInk,
           ),
@@ -206,7 +206,7 @@ class _ComponentSection extends StatelessWidget {
         ),
         if (consumeBy != null)
           GlRow(
-            leading: const GlGlyph(icon: CupertinoIcons.clock),
+            leading: const GlGlyph(icon: LucideIcons.clock),
             title: 'Batas konsumsi',
             value: dateTimeLabel(consumeBy),
             chevron: false,

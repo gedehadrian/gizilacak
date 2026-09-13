@@ -30,7 +30,7 @@ class OrgPickerPage extends StatelessWidget {
             if (session.bootError != null) GlNotice(session.bootError!),
             if (!hasAny)
               const GlEmpty(
-                icon: CupertinoIcons.building_2_fill,
+                icon: LucideIcons.building2,
                 message: 'Belum ada organisasi di akun ini. Buat SPPG atau sekolah, atau '
                     'terima undangan yang dikirim ke email Anda.',
               ),
@@ -50,13 +50,13 @@ class OrgPickerPage extends StatelessWidget {
               footer: 'Paket berlangganan dan invoice diatur di situs web, bukan di aplikasi.',
               children: [
                 GlRow(
-                  leading: const GlGlyph(icon: CupertinoIcons.add),
+                  leading: const GlGlyph(icon: LucideIcons.plus),
                   title: 'Buat SPPG',
                   onTap: () => create(OrgKind.tenant),
                 ),
                 GlRow(
                   leading: const GlGlyph(
-                    icon: CupertinoIcons.add,
+                    icon: LucideIcons.plus,
                     tint: Gl.mint,
                     foreground: Gl.mintInk,
                   ),
@@ -65,7 +65,7 @@ class OrgPickerPage extends StatelessWidget {
                 ),
                 GlRow(
                   leading: const GlGlyph(
-                    icon: CupertinoIcons.envelope,
+                    icon: LucideIcons.mail,
                     tint: Gl.amber,
                     foreground: Gl.amberInk,
                   ),
