@@ -90,6 +90,14 @@ begin
          (tid, sekolah_c, 'active', now())
   on conflict (tenant_id, school_id) do update set status = 'active', accepted_at = now();
 
+  -- tenant_schools hanya mencatat sekolah binaan SPPG. Supaya akun ini juga bisa
+  -- masuk sebagai guru, keanggotaannya di sekolah harus dicatat terpisah.
+  insert into public.school_memberships (school_id, user_id, role, status)
+  values (sekolah_a, uid, 'admin', 'active'),
+         (sekolah_b, uid, 'admin', 'active'),
+         (sekolah_c, uid, 'admin', 'active')
+  on conflict (school_id, user_id) do update set status = 'active';
+
   ---------------------------------------------------------------------------
   -- 2. Menu siap pakai
   ---------------------------------------------------------------------------
