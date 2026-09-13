@@ -3,7 +3,7 @@ import { createSupabaseAdmin } from "@/lib/supabase/admin";
 import { hitungStatusKonsumsiKomponen, statusPalingMendesak } from "@/lib/status";
 
 export type PublicScanDto = {
-  kind: "delivery" | "legacy_batch";
+  kind: "delivery";
   token: string;
   valid: boolean;
   message?: string;
@@ -135,58 +135,7 @@ export async function loadPublicScan(token: string): Promise<PublicScanDto> {
     };
   }
 
-  const { data: legacy } = await admin
-    .from("batch")
-    .select("id, nama_menu, waktu_selesai_masak, ambang_batas_konsumsi_jam, kalori, protein, karbohidrat, lemak, bahan, alergen, dapur_id")
-    .eq("kode_qr", token)
-    .maybeSingle();
-
-  if (!legacy) return emptyDto(token, "QR tidak dikenali atau sudah tidak berlaku.");
-
-  const cooked = legacy.waktu_selesai_masak ? new Date(legacy.waktu_selesai_masak) : null;
-  const jam = Number(legacy.ambang_batas_konsumsi_jam) || null;
-  const consumeBy = cooked && jam ? new Date(cooked.getTime() + jam * 3600_000) : null;
-  const warningMin = jam ? Math.round(jam * 60 * 0.25) : null;
-  const status = hitungStatusKonsumsiKomponen(cooked, consumeBy, warningMin, now);
-  const { data: dapur } = legacy.dapur_id
-    ? await admin.from("dapur").select("nama, kode_dapur").eq("id", legacy.dapur_id).maybeSingle()
-    : { data: null };
-
-  return {
-    kind: "legacy_batch",
-    token,
-    valid: true,
-    message: "Rekaman batch lama. Sekolah tujuan tidak tercatat pada QR ini.",
-    fetched_at: now.toISOString(),
-    server_now: now.toISOString(),
-    delivery: {
-      code: String(legacy.nama_menu ?? "batch-lama"),
-      status: "legacy",
-      dispatched_at: cooked?.toISOString() ?? null,
-      school_name: null,
-      sppg_name: dapur?.nama ?? null,
-      sppg_code: dapur?.kode_dapur ?? null,
-    },
-    components: [
-      {
-        name: String(legacy.nama_menu ?? "Komponen"),
-        cooked_at: cooked?.toISOString() ?? null,
-        consume_by: consumeBy?.toISOString() ?? null,
-        warning_minutes: warningMin,
-        portion_grams: null,
-        kcal: legacy.kalori == null ? null : Number(legacy.kalori),
-        protein_g: legacy.protein == null ? null : Number(legacy.protein),
-        carbs_g: legacy.karbohidrat == null ? null : Number(legacy.karbohidrat),
-        fat_g: legacy.lemak == null ? null : Number(legacy.lemak),
-        ingredients: Array.isArray(legacy.bahan) ? legacy.bahan : String(legacy.bahan ?? "").split(",").filter(Boolean),
-        allergens: Array.isArray(legacy.alergen) ? legacy.alergen : String(legacy.alergen ?? "").split(",").filter(Boolean),
-        allergen_state: "unknown",
-        nutrition_source: "legacy",
-        status,
-      },
-    ],
-    overall: status,
-  };
+  return emptyDto(token, "QR tidak dikenali atau sudah tidak berlaku.");
 }
 
 export async function recordScanEvent(token: string, eventKey: string, actorKind: "public" | "school" | "staff") {
