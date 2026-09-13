@@ -153,11 +153,11 @@ void main() {
       expect(find.text('Ganti kata sandi'), findsOneWidget);
       expect(session.recoveringPassword, isTrue);
       await tester.enterText(
-        find.byType(CupertinoTextField).at(0),
+        find.byType(EditableText).at(0),
         'new-password-123',
       );
       await tester.enterText(
-        find.byType(CupertinoTextField).at(1),
+        find.byType(EditableText).at(1),
         'different-password',
       );
       await tester.tap(find.text('Simpan kata sandi'));
@@ -165,7 +165,7 @@ void main() {
       expect(saved, isNull);
       expect(find.text('Konfirmasi kata sandi tidak cocok.'), findsOneWidget);
       await tester.enterText(
-        find.byType(CupertinoTextField).at(1),
+        find.byType(EditableText).at(1),
         'new-password-123',
       );
       await tester.tap(find.text('Simpan kata sandi'));
@@ -223,7 +223,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(requested, isNull);
     await tester.enterText(
-      find.byType(CupertinoTextField),
+      find.byType(EditableText),
       'test@example.invalid',
     );
     await tester.tap(find.text('Kirim tautan pemulihan'));
@@ -296,3 +296,4 @@ class _MemoryStorage extends GotrueAsyncStorage {
     values.remove(key);
   }
 }
+
