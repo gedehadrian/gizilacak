@@ -1,5 +1,11 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' as m;
+import 'package:flutter/services.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+export 'package:lucide_icons_flutter/lucide_icons.dart' show LucideIcons;
 import 'package:intl/intl.dart';
+
+part 'interactions.dart';
 
 /// Design tokens and widgets for GiziLacak.
 ///
@@ -173,6 +179,7 @@ class _Press extends StatefulWidget {
 
 class _PressState extends State<_Press> {
   bool _down = false;
+  bool _focused = false;
 
   void _set(bool value) {
     if (_down != value) setState(() => _down = value);
@@ -180,17 +187,47 @@ class _PressState extends State<_Press> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.onTap == null) return widget.builder(false);
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: (_) => _set(true),
-      onTapUp: (_) => _set(false),
-      onTapCancel: () => _set(false),
-      onTap: widget.onTap,
-      child: AnimatedScale(
-        scale: _down ? 0.985 : 1,
-        duration: const Duration(milliseconds: 90),
-        child: widget.builder(_down),
+    final enabled = widget.onTap != null;
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      child: FocusableActionDetector(
+        enabled: enabled,
+        mouseCursor: enabled
+            ? SystemMouseCursors.click
+            : SystemMouseCursors.basic,
+        onShowFocusHighlight: (value) => setState(() => _focused = value),
+        shortcuts: const {
+          SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
+          SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
+        },
+        actions: {
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              widget.onTap?.call();
+              return null;
+            },
+          ),
+        },
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapDown: enabled ? (_) => _set(true) : null,
+          onTapUp: enabled ? (_) => _set(false) : null,
+          onTapCancel: enabled ? () => _set(false) : null,
+          onTap: widget.onTap,
+          child: DecoratedBox(
+            position: DecorationPosition.foreground,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: _focused ? Border.all(color: Gl.primary, width: 2) : null,
+            ),
+            child: AnimatedScale(
+              scale: _down ? 0.985 : 1,
+              duration: const Duration(milliseconds: 90),
+              child: widget.builder(_down),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -250,7 +287,7 @@ class GlTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Widget? leading = onBack != null
-        ? GlCircleButton(icon: CupertinoIcons.chevron_back, onTap: onBack)
+        ? GlCircleButton(icon: LucideIcons.chevronLeft, onTap: onBack)
         : (badge == null
               ? null
               : Container(
@@ -594,7 +631,7 @@ class GlTile extends StatelessWidget {
                 const Padding(
                   padding: EdgeInsets.only(left: 6),
                   child: Icon(
-                    CupertinoIcons.chevron_forward,
+                    LucideIcons.chevronRight,
                     size: 14,
                     color: Gl.chevron,
                   ),
@@ -950,7 +987,7 @@ class GlRow extends StatelessWidget {
                   const Padding(
                     padding: EdgeInsets.only(left: 6),
                     child: Icon(
-                      CupertinoIcons.chevron_forward,
+                      LucideIcons.chevronRight,
                       size: 14,
                       color: Gl.chevron,
                     ),
@@ -990,7 +1027,7 @@ class GlActionRow extends StatelessWidget {
           constraints: const BoxConstraints(minHeight: 52),
           child: Center(
             child: busy
-                ? const CupertinoActivityIndicator()
+                ? const GlSpinner()
                 : Text(
                     label,
                     style: Gl.headline.copyWith(
@@ -1036,7 +1073,7 @@ class GlFormRow extends StatelessWidget {
           children: [
             Text(label, style: Gl.body),
             Expanded(
-              child: CupertinoTextField(
+              child: GlInput(
                 controller: controller,
                 placeholder: placeholder,
                 keyboardType: keyboardType,
@@ -1082,22 +1119,25 @@ class GlTextRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return ConstrainedBox(
       constraints: const BoxConstraints(minHeight: 52),
-      child: CupertinoTextField(
-        controller: controller,
-        placeholder: placeholder,
-        obscureText: obscure,
-        keyboardType: keyboardType,
-        autofillHints: autofill,
-        decoration: const BoxDecoration(),
-        prefix: prefixIcon == null
-            ? null
-            : Padding(
-                padding: const EdgeInsets.only(left: 14),
-                child: Icon(prefixIcon, size: 18, color: Gl.tertiary),
-              ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 15),
-        style: Gl.body,
-        placeholderStyle: Gl.body.copyWith(color: Gl.tertiary),
+      child: Padding(
+        padding: const EdgeInsets.all(6),
+        child: GlInput(
+          controller: controller,
+          placeholder: placeholder,
+          obscureText: obscure,
+          keyboardType: keyboardType,
+          autofillHints: autofill,
+          decoration: const BoxDecoration(),
+          prefix: prefixIcon == null
+              ? null
+              : Padding(
+                  padding: const EdgeInsets.only(left: 14),
+                  child: Icon(prefixIcon, size: 18, color: Gl.tertiary),
+                ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 15),
+          style: Gl.body,
+          placeholderStyle: Gl.body.copyWith(color: Gl.tertiary),
+        ),
       ),
     );
   }
@@ -1132,7 +1172,7 @@ class GlButton extends StatelessWidget {
           height: 46,
           child: Center(
             child: busy
-                ? const CupertinoActivityIndicator()
+                ? const GlSpinner()
                 : Text(
                     label,
                     style: Gl.headline.copyWith(
@@ -1164,7 +1204,7 @@ class GlButton extends StatelessWidget {
         ),
         alignment: Alignment.center,
         child: busy
-            ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+            ? const GlSpinner(color: CupertinoColors.white)
             : Text(
                 label,
                 style: const TextStyle(
@@ -1252,7 +1292,7 @@ class GlLoading extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Padding(
       padding: EdgeInsets.symmetric(vertical: 56),
-      child: Center(child: CupertinoActivityIndicator()),
+      child: Center(child: GlSpinner()),
     );
   }
 }
@@ -1274,11 +1314,7 @@ class GlNotice extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(
-              CupertinoIcons.exclamationmark_circle,
-              size: 18,
-              color: Gl.blushInk,
-            ),
+            const Icon(LucideIcons.circleAlert, size: 18, color: Gl.blushInk),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -1372,7 +1408,13 @@ class GlSliver extends StatelessWidget {
             child: CustomScrollView(
               slivers: [
                 if (onRefresh != null)
-                  CupertinoSliverRefreshControl(onRefresh: onRefresh),
+                  CupertinoSliverRefreshControl(
+                    onRefresh: onRefresh,
+                    builder: (context, mode, pulled, trigger, extent) =>
+                        mode == RefreshIndicatorMode.inactive
+                        ? const SizedBox.shrink()
+                        : const Center(child: GlSpinner()),
+                  ),
                 SliverPadding(
                   padding: EdgeInsets.fromLTRB(
                     Gl.gutter,
@@ -1594,17 +1636,17 @@ String statusLabel(String status) {
 IconData iconForStatus(String status) {
   switch (status) {
     case 'draft':
-      return CupertinoIcons.square_pencil;
+      return LucideIcons.squarePen;
     case 'ready':
-      return CupertinoIcons.checkmark_circle;
+      return LucideIcons.circleCheck;
     case 'dispatched':
-      return CupertinoIcons.paperplane;
+      return LucideIcons.send;
     case 'completed':
-      return CupertinoIcons.tray_arrow_down;
+      return LucideIcons.inbox;
     case 'canceled':
-      return CupertinoIcons.xmark_circle;
+      return LucideIcons.circleX;
     default:
-      return CupertinoIcons.circle;
+      return LucideIcons.circle;
   }
 }
 
@@ -1642,13 +1684,13 @@ IconData iconForStatus(String status) {
 }
 
 Future<void> showGlError(BuildContext context, String message) {
-  return showCupertinoDialog<void>(
+  return showGlDialog<void>(
     context: context,
-    builder: (ctx) => CupertinoAlertDialog(
+    builder: (ctx) => GlDialog(
       title: const Text('Tidak bisa dilanjutkan'),
       content: Text(message),
       actions: [
-        CupertinoDialogAction(
+        GlDialogAction(
           onPressed: () => Navigator.pop(ctx),
           child: const Text('OK'),
         ),
