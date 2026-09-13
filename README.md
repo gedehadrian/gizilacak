@@ -1,52 +1,34 @@
-# GiziLacak — Proyek Kanvas Gemilang 2026
+# GiziLacak
 
-Sistem verifikasi dan ketertelusuran batas waktu konsumsi MBG berbasis QR di sekolah Kabupaten Tangerang.
+Purwarupa SaaS verifikasi batas waktu konsumsi MBG di titik penerimaan sekolah (Kanvas Gemilang 2026). Bukan duplikasi sistem produksi BGN. Satu QR per kiriman sekolah, dapat dipindai berulang.
 
-Status: **aplikasi fungsional siap demo lokal** (sprint menuju deadline pendaftaran **13 September 2026**). Deploy Vercel menunggu login akun.
+Aplikasi web: folder `web/` (Next.js 16, Supabase, Midtrans Snap).
 
-## Isi folder ini
+## Setup
 
-- `BRAINSTORM.md` — hasil brainstorm ide: positioning vs ANUSA & sistem BGN yang sudah ada, pembeda, risiko, dan keputusan yang sudah diambil.
-- `PLAN.md` — rencana eksekusi 5 hari + progress build.
-- `docs/competition-requirements.md` — ringkasan ketentuan lomba Kanvas Gemilang 2026.
-- `docs/data-model.md` — model data & arsitektur sistem.
-- `docs/design-system.md` — acuan desain (Figma DashStack) dan adaptasinya.
-- `web/` — aplikasi Next.js (App Router + Supabase + Tailwind).
+1. Salin `web/.env.example` → `web/.env.local` (lihat `docs/ENV_SETUP.md`).
+2. `cd web && npm install`
+3. `npm run dev` → http://localhost:3000
+4. Daftar di `/daftar`, verifikasi email, `/onboarding`, pilih organisasi.
+5. Beli paket contoh di `/paket` (checkout Midtrans hanya jika `MIDTRANS_SERVER_KEY` terisi).
+6. Menu → batch (catat matang) → finalisasi → hubungkan sekolah → kiriman → dispatch → scan QR → receipt sekolah.
 
-## Idenya secara singkat
-
-GiziLacak adalah **lapisan verifikasi independen** di titik penerimaan makanan MBG di sekolah — bukan sistem pelaporan produksi baru yang menduplikasi SIPGN Produksi/Reviu MBG/Radar MBG milik BGN. Staf SPPG mencatat waktu matang & kirim → sistem terbitkan satu QR per paket/batch → petugas sekolah memindai saat diterima → halaman publik menampilkan waktu matang, batas konsumsi, dan status ("masih dalam batas waktu konsumsi", bukan "aman") → guru mencatat diterima/ditolak/dilaporkan → riwayat dapat ditelusuri per batch saat ada insiden.
-
-## Cara menjalankan (lokal)
+## Test
 
 ```bash
 cd web
-cp .env.local.example .env.local   # lalu isi kredensial Supabase
-npm install
-npm run dev
+npm test
+npm run build
 ```
 
-Buka http://localhost:3000
+## Deploy
 
-### PIN demo
-| Peran | PIN |
-|---|---|
-| Staf SPPG (dapur) | `1234` |
-| Guru/UKS (sekolah) | `5678` |
-| Admin dashboard | `2468` |
+Tidak dijalankan dari sesi ini. Bind ke `0.0.0.0:$PORT` di host Linux. Filesystem ephemeral: jangan andalkan unggahan lokal.
 
-### Alur demo cepat
-1. `/staf` → login PIN dapur → isi form batch → QR muncul.
-2. Buka URL `/scan/[token]` (atau scan QR dari HP di jaringan yang sama / setelah deploy).
-3. `/lapor` → login PIN sekolah → kirim diterima/ditolak/bermasalah.
-4. `/admin` → login PIN admin → lihat tabel + detail timeline.
+## Dokumentasi
 
-## Env yang dibutuhkan
-
-Lihat `web/.env.local.example`:
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `NEXT_PUBLIC_DEFAULT_AMBANG_JAM`
-- `ADMIN_PIN` (server-side)
-
-Setelah skema siap, jalankan isi `web/supabase/schema.sql` di SQL Editor Supabase (atau lewat MCP/CLI).
+- `docs/IMPLEMENTATION_STATUS.md`
+- `docs/ENV_SETUP.md`
+- `docs/TEST_RESULTS.md`
+- `docs/MIGRATION_REPORT.md`
+- `GIZILACAK_FULL_FUNCTIONAL_SPEC.md`
