@@ -2,10 +2,19 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
+/// Pasangan tabel yang punya foreign key di antaranya, arah mana pun.
+/// PostgREST hanya bisa menyematkan relasi lewat FK; tanpa itu ia menolak
+/// dengan PGRST200 saat aplikasi berjalan.
+Set<String> _relations() => _read().$2;
+
 /// Kolom tiap tabel, dibaca dari berkas migrasi SQL.
-Map<String, Set<String>> _schema() {
+Map<String, Set<String>> _schema() => _read().$1;
+
+(Map<String, Set<String>>, Set<String>) _read() {
   final dir = Directory('../web/supabase/migrations');
   final tables = <String, Set<String>>{};
+  final edges = <String>{};
+  final reference = RegExp(r'references\s+public\.(\w+)');
   final table = RegExp(
     r'create table if not exists public\.(\w+)\s*\((.*?)\n\);',
     dotAll: true,
@@ -22,9 +31,13 @@ Map<String, Set<String>> _schema() {
         final hit = column.firstMatch(line.trim());
         if (hit != null) cols.add(hit.group(1)!);
       }
+      for (final fk in reference.allMatches(match.group(2)!)) {
+        final pair = [match.group(1)!, fk.group(1)!]..sort();
+        edges.add(pair.join('~'));
+      }
     }
   }
-  return tables;
+  return (tables, edges);
 }
 
 /// Memecah isi `.select(...)` PostgREST menjadi potongan-potongan di tingkat
@@ -49,6 +62,36 @@ List<String> _topLevelParts(String select) {
   return parts.where((p) => p.isNotEmpty).toList();
 }
 
+/// Mengambil isi `.select(...)` beserta tabel asalnya. Kurung dihitung
+/// berpasangan dan kurung di dalam literal string diabaikan, sehingga
+/// bentuk `var q = sb.from('x').select('a, b(c)');` ikut terbaca — versi
+/// regex sebelumnya melewatkannya diam-diam.
+List<(String, String)> _selects(String source) {
+  final found = <(String, String)>[];
+  final head = RegExp(r"\.from\('(\w+)'\)\s*\.select\(");
+  for (final m in head.allMatches(source)) {
+    var depth = 1;
+    var inString = false;
+    final buffer = StringBuffer();
+    for (var i = m.end; i < source.length && depth > 0; i++) {
+      final ch = source[i];
+      if (ch == "'") {
+        inString = !inString;
+        continue;
+      }
+      if (!inString) {
+        if (ch == '(') depth++;
+        if (ch == ')') depth--;
+        continue;
+      }
+      buffer.write(ch);
+    }
+    final select = buffer.toString().trim();
+    if (select.isNotEmpty) found.add((m.group(1)!, select));
+  }
+  return found;
+}
+
 void main() {
   // Regresi nyata: `invoices` dipilih dengan kolom `period_start`/`period_end`
   // yang sebenarnya milik `subscriptions`. Database menolak dengan
@@ -57,11 +100,10 @@ void main() {
   // seperti ini tidak terlihat oleh analyzer karena select hanyalah teks.
   test('setiap kolom di .select() benar-benar ada di skema', () {
     final schema = _schema();
+    final relations = _relations();
     expect(schema, isNotEmpty, reason: 'Berkas migrasi tidak terbaca');
 
     final source = File('lib/data/api.dart').readAsStringSync();
-    final call = RegExp(r"\.from\('(\w+)'\)\s*\.select\(([^;]*?)\)\s*\n");
-    final literal = RegExp(r"'([^']*)'");
     final problems = <String>[];
 
     void verify(String table, String select) {
@@ -74,7 +116,15 @@ void main() {
         final relation = RegExp(r'^(\w+)(?:!\w+)?\((.*)\)$', dotAll: true)
             .firstMatch(part);
         if (relation != null) {
-          verify(relation.group(1)!, relation.group(2)!);
+          final child = relation.group(1)!;
+          final pair = [table, child]..sort();
+          if (!relations.contains(pair.join('~'))) {
+            problems.add(
+              '$table tidak punya foreign key ke $child, '
+              'jadi penyematan $child(...) akan ditolak PGRST200',
+            );
+          }
+          verify(child, relation.group(2)!);
           continue;
         }
         if (part == '*') continue;
@@ -82,14 +132,8 @@ void main() {
       }
     }
 
-    for (final match in call.allMatches(source)) {
-      // Dart menyambung literal yang berdampingan; gabungkan dulu.
-      final select = literal
-          .allMatches(match.group(2)!)
-          .map((m) => m.group(1)!)
-          .join();
-      if (select.trim().isEmpty) continue;
-      verify(match.group(1)!, select);
+    for (final (table, select) in _selects(source)) {
+      verify(table, select);
     }
 
     expect(problems.toSet().toList(), isEmpty);
