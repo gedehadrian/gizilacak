@@ -21,6 +21,11 @@ const STYLES: Record<
     text: "text-danger",
     ring: "ring-danger/30",
   },
+  "belum-terverifikasi": {
+    bg: "bg-[#f5f6fa]",
+    text: "text-muted",
+    ring: "ring-border",
+  },
 };
 
 export function StatusBadge({

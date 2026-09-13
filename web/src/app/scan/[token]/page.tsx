@@ -1,39 +1,28 @@
 import { StatusBadge } from "@/components/StatusBadge";
-import {
-  formatSelisihJam,
-  formatWaktu,
-  hitungBatasKonsumsi,
-} from "@/lib/format";
-import { hitungStatusKonsumsi } from "@/lib/status";
-import { supabaseAdmin } from "@/lib/supabase-admin";
-import type { Batch } from "@/lib/types";
+import { ScanEvent } from "@/components/ScanEvent";
+import { formatWaktu } from "@/lib/format";
+import { isAdminConfigured } from "@/lib/supabase/admin";
+import { loadPublicScan } from "@/modules/delivery/public-scan";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-export default async function ScanPage({
-  params,
-}: {
-  params: Promise<{ token: string }>;
-}) {
+export default async function ScanPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
+  if (!isAdminConfigured()) {
+    return (
+      <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-3 p-6 text-center">
+        <p className="font-bold">Data belum dapat diverifikasi</p>
+        <p className="text-sm text-muted">Lookup publik belum dikonfigurasi di server.</p>
+      </main>
+    );
+  }
 
-  const { data, error } = await supabaseAdmin
-    .from("batch")
-    .select("*, dapur:dapur_id(nama, kode_dapur)")
-    .eq("kode_qr", token)
-    .maybeSingle();
-
-  if (error || !data) {
+  const dto = await loadPublicScan(token);
+  if (!dto.valid) {
     return (
       <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-4 bg-background p-6 text-center">
-        <p className="text-sm font-semibold text-danger">
-          Batch tidak ditemukan
-        </p>
-        <p className="text-sm text-muted">
-          Token QR tidak valid atau data belum tersedia. Pastikan QR berasal dari
-          batch GiziLacak.
-        </p>
+        <p className="text-sm font-semibold text-danger">{dto.message || "QR tidak valid"}</p>
         <Link href="/" className="text-sm font-bold text-primary underline">
           Kembali ke beranda
         </Link>
@@ -41,124 +30,64 @@ export default async function ScanPage({
     );
   }
 
-  const batch = data as Batch;
-  const hasil = hitungStatusKonsumsi(
-    new Date(batch.waktu_selesai_masak),
-    Number(batch.ambang_batas_konsumsi_jam) || 4
-  );
-  const batas = hitungBatasKonsumsi(
-    batch.waktu_selesai_masak,
-    Number(batch.ambang_batas_konsumsi_jam) || 4
-  );
-
-  // Catat jejak scan (publik). Abaikan error agar halaman tetap tampil.
-  await supabaseAdmin.from("scan_log").insert({
-    batch_id: batch.id,
-    peran_pemindai: "publik",
-  });
-
-  const dapurRel = batch.dapur as
-    | { nama?: string; kode_dapur?: string }
-    | { nama?: string; kode_dapur?: string }[]
-    | null
-    | undefined;
-  const dapurNama = Array.isArray(dapurRel)
-    ? dapurRel[0]?.nama ?? "Dapur SPPG"
-    : dapurRel?.nama ?? "Dapur SPPG";
-
   return (
     <main className="mx-auto min-h-screen max-w-md bg-background px-4 py-6">
+      <ScanEvent token={token} />
       <header className="mb-5 text-center">
         <p className="text-sm font-extrabold">
           <span className="text-primary">Gizi</span>Lacak
         </p>
-        <p className="text-xs text-muted">Hasil verifikasi batas waktu konsumsi</p>
+        <p className="text-xs text-muted">Verifikasi batas waktu konsumsi · satu QR per kiriman sekolah</p>
       </header>
-
       <section className="rounded-[14px] bg-card p-5 text-center shadow-[var(--shadow-card)]">
-        <StatusBadge status={hasil.status} label={hasil.label} size="lg" />
+        <StatusBadge status={dto.overall.status} label={dto.overall.label} size="lg" />
         <p className="mt-4 text-sm text-muted">
-          Sudah {formatSelisihJam(hasil.selisihJam)} sejak selesai masak
+          {dto.delivery?.sppg_name} {dto.delivery?.sppg_code ? `(${dto.delivery.sppg_code})` : ""}
         </p>
-        <h1 className="mt-3 text-xl font-extrabold leading-snug">
-          {batch.nama_komponen_menu}
-        </h1>
-        <p className="mt-1 text-sm text-muted">{dapurNama}</p>
+        <p className="text-sm font-semibold">{dto.delivery?.code}</p>
+        {dto.delivery?.school_name ? <p className="text-xs text-muted">Tujuan: {dto.delivery.school_name}</p> : null}
+        {dto.message ? <p className="mt-2 text-xs text-muted">{dto.message}</p> : null}
       </section>
-
-      <section className="mt-4 space-y-3 rounded-[14px] bg-card p-5 shadow-[var(--shadow-card)]">
-        <Row label="Waktu selesai masak" value={formatWaktu(batch.waktu_selesai_masak)} />
-        <Row label="Batas waktu konsumsi" value={formatWaktu(batas)} />
-        <Row
-          label="Ambang"
-          value={`${batch.ambang_batas_konsumsi_jam} jam sejak matang`}
-        />
-        {batch.waktu_kirim ? (
-          <Row label="Waktu kirim" value={formatWaktu(batch.waktu_kirim)} />
-        ) : null}
+      <section className="mt-4 space-y-3">
+        {dto.components.map((c) => (
+          <article key={c.name + (c.cooked_at ?? "")} className="rounded-[14px] bg-card p-4 shadow-[var(--shadow-card)]">
+            <div className="flex items-start justify-between gap-2">
+              <h2 className="font-extrabold">{c.name}</h2>
+              <StatusBadge status={c.status.status} label={c.status.label} />
+            </div>
+            <dl className="mt-3 space-y-1 text-sm">
+              <Row k="Matang" v={c.cooked_at ? formatWaktu(c.cooked_at) : "belum tersedia"} />
+              <Row k="Batas konsumsi" v={c.consume_by ? formatWaktu(c.consume_by) : "belum tersedia"} />
+              <Row k="Energi" v={c.kcal == null ? "belum tersedia" : `${c.kcal} kkal`} />
+              <Row k="Protein" v={c.protein_g == null ? "belum tersedia" : `${c.protein_g} g`} />
+              <Row k="Karbohidrat" v={c.carbs_g == null ? "belum tersedia" : `${c.carbs_g} g`} />
+              <Row k="Lemak" v={c.fat_g == null ? "belum tersedia" : `${c.fat_g} g`} />
+              <Row k="Bahan" v={c.ingredients.length ? c.ingredients.join(", ") : "belum tersedia"} />
+              <Row k="Alergen" v={c.allergen_state === "unknown" ? "belum tersedia" : c.allergens.join(", ") || "tidak dicantumkan"} />
+            </dl>
+          </article>
+        ))}
       </section>
-
-      <section className="mt-4 rounded-[14px] bg-card p-5 shadow-[var(--shadow-card)]">
-        <h2 className="text-sm font-extrabold">Rincian gizi</h2>
-        <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-          <Stat label="Kalori" value={batch.kalori} unit="kkal" />
-          <Stat label="Protein" value={batch.protein} unit="g" />
-          <Stat label="Karbohidrat" value={batch.karbohidrat} unit="g" />
-          <Stat label="Lemak" value={batch.lemak} unit="g" />
-        </div>
-        <div className="mt-4 space-y-2 text-sm">
-          <p>
-            <span className="font-semibold">Alergen: </span>
-            {batch.daftar_alergen?.length
-              ? batch.daftar_alergen.join(", ")
-              : "—"}
-          </p>
-          <p>
-            <span className="font-semibold">Bahan: </span>
-            {batch.daftar_bahan?.length ? batch.daftar_bahan.join(", ") : "—"}
-          </p>
-        </div>
-      </section>
-
-      <p className="mt-4 text-center text-xs leading-relaxed text-muted">
-        Status di atas hanya mengacu pada batas waktu konsumsi sejak selesai
-        masak. Ini bukan jaminan kebersihan atau kualitas lain.
+      <p className="mt-4 text-center text-xs text-muted">
+        Diambil {formatWaktu(dto.fetched_at)} · acuan server {formatWaktu(dto.server_now)}. Bukan jaminan bebas kontaminasi.
       </p>
-
-      <Link
-        href={`/lapor?token=${token}`}
-        className="mt-5 flex w-full items-center justify-center rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white"
-      >
-        Lapor diterima / ditolak / bermasalah
-      </Link>
+      {dto.kind === "delivery" && dto.delivery?.status === "dispatched" ? (
+        <p className="mt-4 text-center text-sm">
+          Petugas sekolah:{" "}
+          <Link href={`/masuk?next=/sekolah`} className="font-bold text-primary">
+            masuk untuk penerimaan / laporan
+          </Link>
+        </p>
+      ) : null}
     </main>
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ k, v }: { k: string; v: string }) {
   return (
-    <div className="flex items-start justify-between gap-3 border-b border-border pb-2 text-sm last:border-0 last:pb-0">
-      <span className="text-muted">{label}</span>
-      <span className="text-right font-semibold">{value}</span>
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  unit,
-}: {
-  label: string;
-  value: number | null;
-  unit: string;
-}) {
-  return (
-    <div className="rounded-xl bg-[#f5f6fa] px-3 py-2">
-      <p className="text-xs text-muted">{label}</p>
-      <p className="font-extrabold">
-        {value == null ? "—" : `${value} ${unit}`}
-      </p>
+    <div className="flex justify-between gap-4">
+      <dt className="text-muted">{k}</dt>
+      <dd className="text-right font-semibold">{v}</dd>
     </div>
   );
 }
