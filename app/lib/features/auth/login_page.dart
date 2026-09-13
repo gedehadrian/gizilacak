@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../state/session.dart';
@@ -33,6 +34,11 @@ class _LoginPageState extends State<LoginPage> {
         final res = await session.client.auth.signUp(
           email: email.text.trim(),
           password: password.text,
+          // Tanpa ini Supabase memakai Site URL proyek, sehingga tautan
+          // verifikasi mengarah ke situs, bukan kembali ke aplikasi.
+          emailRedirectTo: kIsWeb
+              ? Uri.base.replace(query: '', fragment: '').toString()
+              : 'gizilacak://auth-callback',
         );
         if (!mounted) return;
         if (res.session == null) {
