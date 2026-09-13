@@ -1,6 +1,6 @@
 {
-    "name": "gizilacak",
-    "short_name": "gizilacak",
+    "name": "GiziLacak",
+    "short_name": "GiziLacak",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
