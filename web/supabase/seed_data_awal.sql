@@ -13,7 +13,7 @@
 do $$
 declare
   -- Ganti bila akun pemilik SPPG-nya berbeda.
-  _email text := 'igedehadrian999@gmail.com';
+  _email text := 'igedehadrian45@gmail.com';
 
   uid uuid;
   tid uuid;
