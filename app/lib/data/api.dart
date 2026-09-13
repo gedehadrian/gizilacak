@@ -855,7 +855,7 @@ class Api {
   }) async {
     var q = sb.from('incidents').select(
           'id, category, description, status, severity, reported_at, resolved_at, '
-          'resolution, delivery_id, deliveries(code), schools(name)',
+          'resolution, delivery_id, deliveries(code)',
         );
     if (tenantId != null) q = q.eq('tenant_id', tenantId);
     if (schoolId != null) q = q.eq('school_id', schoolId);
